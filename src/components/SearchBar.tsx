@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function SearchBar() {
   return (
-    <div style={{ padding: '0 16px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+    <div style={{ padding: '0 16px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', position: 'sticky', top: '16px', zIndex: 40 }}>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(0, 0, 0, 0.4)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <Search size={20} color="var(--text-secondary)" />
         <input 

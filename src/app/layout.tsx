@@ -1,29 +1,36 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Playfair_Display, Poppins } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "../context/CartContext";
+import { LocationProvider } from "../context/LocationContext";
 import Cart from "../components/Cart";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const playfair = Playfair_Display({ 
   subsets: ["latin"],
+  variable: '--font-playfair'
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const poppins = Poppins({ 
+  subsets: ["latin"], 
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins'
 });
-
-
-
-export const metadata: Metadata = {
-  title: "Azmar Mandi",
-  description: "Azmar Mandi Mobile App",
-  manifest: "/manifest.json",
-};
 
 export const viewport: Viewport = {
-  themeColor: "#0f0f11",
+  themeColor: '#000000',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
+export const metadata: Metadata = {
+  title: "Azmar Mandi - Authentic Arabian Flavors",
+  description: "Experience the true taste of Arabia at Azmar Mandi. Order online for delivery or pickup.",
+  manifest: '/manifest.json',
+  icons: {
+    apple: '/icons/icon-192x192.png',
+  }
 };
 
 export default function RootLayout({
@@ -32,12 +39,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>
-        <CartProvider>
-          {children}
-          <Cart />
-        </CartProvider>
+    <html lang="en">
+      <body className={`${poppins.variable} ${playfair.variable}`}>
+        <LocationProvider>
+          <CartProvider>
+            {children}
+            <Cart />
+          </CartProvider>
+        </LocationProvider>
       </body>
     </html>
   );

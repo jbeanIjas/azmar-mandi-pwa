@@ -1,73 +1,28 @@
 "use client";
 
 import { MapPin, Wallet, Loader2 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
-
-const RESTAURANT_LAT = 8.475091650738907; // Trivandrum, Kerala
-const RESTAURANT_LNG = 76.94724385255535; // Trivandrum, Kerala
-const MAX_DISTANCE_KM = 5;
-
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+import React, { useState } from 'react';
+import { useLocation } from '../context/LocationContext';
+import LocationSelector from './LocationSelector';
+import AddressEditor from './AddressEditor';
 
 export default function Header() {
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [isDeliveryAvailable, setIsDeliveryAvailable] = useState<boolean>(false);
-  const [locationName, setLocationName] = useState('Manacaud');
-  const [locationAddress, setLocationAddress] = useState('Thiruvananthapuram, Kerala,...');
-  
-  useEffect(() => {
-    setLocationStatus('loading');
-    if (!navigator.geolocation) {
-      setLocationStatus('error');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const distance = calculateDistance(latitude, longitude, RESTAURANT_LAT, RESTAURANT_LNG);
-        setIsDeliveryAvailable(distance <= MAX_DISTANCE_KM);
-        
-        // Reverse geocoding
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-          const data = await res.json();
-          if (data && data.address) {
-            const name = data.address.suburb || data.address.neighbourhood || data.address.city || 'Current Location';
-            const address = [data.address.city || data.address.town || data.address.county, data.address.state].filter(Boolean).join(', ');
-            setLocationName(name);
-            setLocationAddress(address || 'Location found');
-          }
-        } catch (e) {
-          console.error("Geocoding failed", e);
-        }
-
-        setLocationStatus('success');
-      },
-      (error) => {
-        console.error("Location error", error);
-        setLocationStatus('error');
-      }
-    );
-  }, []);
+  const { locationStatus, isDeliveryAvailable, locationName, locationAddress } = useLocation();
+  const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
+  const [isAddressEditorOpen, setIsAddressEditorOpen] = useState(false);
 
   return (
+    <>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', gap: '12px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div 
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, cursor: 'pointer', minWidth: 0 }}
+        onClick={() => setIsLocationSelectorOpen(true)}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <MapPin size={18} color="white" />
-          <h2 style={{ fontSize: '18px', fontWeight: '700', margin: 0, display: 'flex', alignItems: 'center', gap: '4px', color: 'white' }}>
-            {locationName} <span style={{ fontSize: '12px' }}>▼</span>
+          <MapPin size={18} color="white" style={{ flexShrink: 0 }} />
+          <h2 style={{ fontSize: '18px', fontWeight: '700', margin: 0, display: 'flex', alignItems: 'center', gap: '4px', color: 'white', overflow: 'hidden' }}>
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{locationName}</span>
+            <span style={{ fontSize: '12px', flexShrink: 0 }}>▼</span>
           </h2>
         </div>
         
@@ -117,5 +72,22 @@ export default function Header() {
         </div>
       </div>
     </div>
+      
+      {isLocationSelectorOpen && (
+        <LocationSelector 
+          onClose={() => setIsLocationSelectorOpen(false)}
+          onAddAddress={() => {
+            setIsLocationSelectorOpen(false);
+            setIsAddressEditorOpen(true);
+          }}
+        />
+      )}
+      
+      {isAddressEditorOpen && (
+        <AddressEditor 
+          onClose={() => setIsAddressEditorOpen(false)}
+        />
+      )}
+    </>
   );
 }

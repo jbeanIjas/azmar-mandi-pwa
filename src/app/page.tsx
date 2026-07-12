@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import PromoBanner from '../components/PromoBanner';
@@ -6,9 +7,11 @@ import CategoryScroll from '../components/CategoryScroll';
 import RestaurantCard from '../components/RestaurantCard';
 import BottomNav from '../components/BottomNav';
 import Footer from '../components/Footer';
-import { menuItems } from '../data/menuData';
+import prisma from '../lib/prisma';
 
-export default function Home() {
+export default async function Home() {
+  const menuItems = await prisma.menuItem.findMany();
+
   // Select some top items for the "Recommended For You" section
   const recommendedItems = menuItems.filter(item => 
     item.tags?.includes('Best Seller') || item.tags?.includes('Signature') || item.tags?.includes('Classic')
@@ -30,10 +33,15 @@ export default function Home() {
       
       <CategoryScroll />
       
-      <div style={{ padding: '16px', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-          Recommended For You
-        </h2>
+      <div id="recommended" style={{ padding: '16px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-secondary)', margin: 0 }}>
+            Recommended For You
+          </h2>
+          <Link href="/collection/all" style={{ fontSize: '12px', color: 'var(--accent-red)', textDecoration: 'none', fontWeight: 'bold' }}>
+            View All
+          </Link>
+        </div>
         
         <div 
           className="hide-scrollbar"
@@ -55,7 +63,7 @@ export default function Home() {
       </div>
 
       {['signatures', 'alfaham', 'mandi', 'coastal', 'beverages'].map(category => {
-        const catItems = menuItems.filter(item => item.category === category);
+        const catItems = menuItems.filter(item => item.categoryId === category);
         if (catItems.length === 0) return null;
         
         const catTitles: Record<string, string> = {
@@ -67,10 +75,15 @@ export default function Home() {
         };
 
         return (
-          <div key={category} style={{ padding: '16px', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              {catTitles[category]}
-            </h2>
+          <div id={category} key={category} style={{ padding: '16px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-secondary)', margin: 0 }}>
+                {catTitles[category]}
+              </h2>
+              <Link href={`/collection/${category}`} style={{ fontSize: '12px', color: 'var(--accent-red)', textDecoration: 'none', fontWeight: 'bold' }}>
+                View All
+              </Link>
+            </div>
             
             <div 
               className="hide-scrollbar"

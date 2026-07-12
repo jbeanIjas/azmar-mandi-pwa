@@ -1,15 +1,20 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { menuItems } from '../../../data/menuData';
 import RestaurantCard from '../../../components/RestaurantCard';
 import BottomNav from '../../../components/BottomNav';
+import prisma from '../../../lib/prisma';
 
 export default async function CollectionPage({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
   
-  // Filter items by category
-  const items = menuItems.filter(item => item.category.toLowerCase() === category.toLowerCase());
+  const items = category.toLowerCase() === 'all' 
+    ? await prisma.menuItem.findMany()
+    : await prisma.menuItem.findMany({
+        where: {
+          categoryId: category.toLowerCase()
+        }
+      });
   
   // Format category title
   const title = category.replace(/-/g, ' ').toUpperCase();

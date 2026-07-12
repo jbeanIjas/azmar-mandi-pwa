@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { Home, Menu, Flame, Phone, ShoppingBag } from "lucide-react";
-import React from 'react';
+import React, { useRef } from 'react';
 import { useCart } from "../context/CartContext";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import ScrollToPlugin from "gsap/ScrollToPlugin";
+
+gsap.registerPlugin(ScrollToPlugin);
 
 export default function BottomNav() {
   const { items, setIsCartOpen } = useCart();
@@ -15,6 +20,39 @@ export default function BottomNav() {
     { name: "Mandi", href: "/#mandi", icon: Menu },
     { name: "Contact", href: "/contact", icon: Phone },
   ];
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    // GSAP micro-interaction on the target element
+    const iconContainer = e.currentTarget.querySelector('.nav-icon');
+    if (iconContainer) {
+      gsap.fromTo(iconContainer, 
+        { scale: 0.8 }, 
+        { scale: 1, duration: 0.4, ease: "back.out(2)" }
+      );
+    }
+
+    // Smooth scroll for hash links
+    if (href.startsWith('/#')) {
+      e.preventDefault();
+      const id = href.replace('/#', '');
+      const element = document.getElementById(id);
+      if (element) {
+        // Offset for the sticky header (approx 140px)
+        gsap.to(window, { duration: 0.8, scrollTo: { y: element, offsetY: 140 }, ease: "power3.inOut" });
+      }
+    }
+  };
+
+  const handleCartClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const iconContainer = e.currentTarget.querySelector('.nav-icon');
+    if (iconContainer) {
+      gsap.fromTo(iconContainer, 
+        { scale: 0.8, y: -5 }, 
+        { scale: 1, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" }
+      );
+    }
+    setIsCartOpen(true);
+  };
 
   return (
     <div style={{
@@ -36,6 +74,7 @@ export default function BottomNav() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={(e) => handleNavClick(e, item.href)}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -47,7 +86,9 @@ export default function BottomNav() {
                 textDecoration: 'none'
               }}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+              <div className="nav-icon">
+                <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+              </div>
               <span style={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {item.name}
               </span>
@@ -57,7 +98,7 @@ export default function BottomNav() {
         
         {/* Cart Button */}
         <button
-          onClick={() => setIsCartOpen(true)}
+          onClick={handleCartClick}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -72,7 +113,7 @@ export default function BottomNav() {
             position: 'relative'
           }}
         >
-          <div style={{ position: 'relative' }}>
+          <div className="nav-icon" style={{ position: 'relative' }}>
             <ShoppingBag size={20} strokeWidth={1.5} />
             {totalItems > 0 && (
               <span style={{
