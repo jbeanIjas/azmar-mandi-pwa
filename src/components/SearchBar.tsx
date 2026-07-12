@@ -13,13 +13,6 @@ export default function SearchBar() {
         />
         <Mic size={20} color="var(--accent-red)" />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <span style={{ fontSize: '10px', fontWeight: 'bold' }}>VEG</span>
-        <span style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '2px' }}>MODE</span>
-        <div style={{ width: '32px', height: '18px', background: 'rgba(0, 0, 0, 0.4)', borderRadius: '10px', position: 'relative' }}>
-          <div style={{ width: '14px', height: '14px', background: 'var(--text-secondary)', borderRadius: '50%', position: 'absolute', top: '2px', left: '2px' }} />
-        </div>
-      </div>
     </div>
   );
 }

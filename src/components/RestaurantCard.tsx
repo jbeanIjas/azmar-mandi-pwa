@@ -10,7 +10,7 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
   const { addToCart } = useCart();
 
   return (
-    <div style={{ minWidth: '160px', width: '160px', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ width: '100%', borderRadius: '16px', overflow: 'hidden', position: 'relative', border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', scrollSnapAlign: 'start' }}>
       <div style={{ height: '180px', position: 'relative' }}>
         <Image src={item.image} alt={item.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 160px, 160px" />
         <div style={{ position: 'absolute', top: '8px', left: '0', background: 'var(--accent-red)', color: 'white', fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderTopRightRadius: '4px', borderBottomRightRadius: '4px' }}>
@@ -20,8 +20,21 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
           4.2 <span style={{ fontSize: '8px' }}>★</span>
         </div>
       </div>
-      <div style={{ padding: '12px 0' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</h3>
+      <div style={{ padding: '12px' }}>
+        <h3 style={{ 
+          fontSize: '16px', 
+          fontWeight: 'bold', 
+          margin: '0 0 4px 0', 
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          lineHeight: '1.2',
+          minHeight: '38px' // 2 lines at 1.2 line height of 16px is approx 38px
+        }}>
+          {item.name}
+        </h3>
         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.category.toUpperCase()} • {item.price}</p>
         <button
           onClick={(e) => {
