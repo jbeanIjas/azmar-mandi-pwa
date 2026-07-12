@@ -1,0 +1,17 @@
+{
+  "name": "Azmar Mandi",
+  "short_name": "Azmar Mandi",
+  "description": "Azmar Mandi Mobile App",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f11",
+  "theme_color": "#0f0f11",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/x-icon"
+    }
+  ]
+}
