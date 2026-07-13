@@ -1,5 +1,5 @@
 :root {
-  --bg-dark: #121215;
+  --bg-dark: #212121;
   --bg-darker: #0c0c0e;
   --bg-card: #1c1c1f;
   --bg-card-hover: #262629;
@@ -7,9 +7,7 @@
   --text-primary: #ffffff;
   --text-secondary: #a1a1aa;
   
-  --accent-red: #d12130;
-  --accent-gold: #f4d068;
-  --accent-gold-dark: #b89842;
+  --accent-red: #bd1d4b;
   
   --border-subtle: #27272a;
   
@@ -29,7 +27,7 @@
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
   background-color: var(--bg-dark);
   color: var(--text-primary);
   font-family: var(--font-poppins), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;

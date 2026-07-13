@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "../context/CartContext";
 import { LocationProvider } from "../context/LocationContext";
 import Cart from "../components/Cart";
+import BottomNav from "../components/BottomNav";
 
 const playfair = Playfair_Display({ 
   subsets: ["latin"],
@@ -17,7 +18,7 @@ const poppins = Poppins({
 });
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#212121',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -44,6 +45,7 @@ export default function RootLayout({
         <LocationProvider>
           <CartProvider>
             {children}
+            <BottomNav />
             <Cart />
           </CartProvider>
         </LocationProvider>

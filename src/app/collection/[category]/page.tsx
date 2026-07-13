@@ -2,7 +2,6 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import RestaurantCard from '../../../components/RestaurantCard';
-import BottomNav from '../../../components/BottomNav';
 import prisma from '../../../lib/prisma';
 
 export default async function CollectionPage({ params }: { params: Promise<{ category: string }> }) {
@@ -20,14 +19,14 @@ export default async function CollectionPage({ params }: { params: Promise<{ cat
   const title = category.replace(/-/g, ' ').toUpperCase();
 
   return (
-    <main style={{ paddingBottom: '100px', minHeight: '100vh', backgroundColor: '#0a0a0c' }}>
+    <main style={{ paddingBottom: '100px', minHeight: '100vh', backgroundColor: 'var(--bg-dark)' }}>
       
       {/* Header */}
       <div style={{ 
         position: 'sticky', 
         top: 0, 
         zIndex: 40,
-        background: 'linear-gradient(135deg, #7c1212 0%, #b81d22 100%)', 
+        background: 'var(--accent-red)',
         padding: '16px',
         display: 'flex',
         alignItems: 'center',
@@ -67,7 +66,6 @@ export default async function CollectionPage({ params }: { params: Promise<{ cat
         )}
       </div>
 
-      <BottomNav />
     </main>
   );
 }

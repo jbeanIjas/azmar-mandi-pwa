@@ -257,7 +257,7 @@ export default function ProductModal({ item, onClose }: ProductModalProps) {
             }}
             style={{ 
               flex: 1, 
-              background: '#f43f5e', 
+              background: 'var(--accent-red)',
               color: 'white', 
               border: 'none', 
               borderRadius: '12px', 

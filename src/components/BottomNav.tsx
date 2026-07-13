@@ -60,8 +60,8 @@ export default function BottomNav() {
       bottom: 0,
       left: 0,
       width: '100%',
-      backgroundColor: '#121215',
-      borderTop: '1px solid rgba(244, 208, 104, 0.2)',
+      backgroundColor: 'var(--bg-dark)',
+      borderTop: '1px solid rgba(189, 29, 75, 0.2)',
       zIndex: 50,
       padding: '12px 16px',
       boxShadow: '0 -4px 20px rgba(0,0,0,0.5)',
@@ -82,7 +82,7 @@ export default function BottomNav() {
                 justifyContent: 'center',
                 gap: '4px',
                 width: '20%',
-                color: isActive ? 'var(--accent-gold)' : 'rgba(255, 255, 255, 0.6)',
+                color: isActive ? 'var(--accent-red)' : 'rgba(255, 255, 255, 0.6)',
                 textDecoration: 'none'
               }}
             >
@@ -120,7 +120,7 @@ export default function BottomNav() {
                 position: 'absolute',
                 top: '-6px',
                 right: '-6px',
-                background: '#dc2626',
+                background: 'var(--accent-red)',
                 color: 'white',
                 fontSize: '8px',
                 fontWeight: 'bold',
@@ -130,7 +130,7 @@ export default function BottomNav() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '50%',
-                border: '1px solid #121215'
+                border: '1px solid var(--bg-dark)'
               }}>
                 {totalItems}
               </span>

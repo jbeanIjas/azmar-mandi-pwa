@@ -9,7 +9,7 @@ export default function PromoBanner() {
       overflow: 'hidden'
     }}>
       <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '900', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '1px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)', color: 'var(--accent-gold)' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '900', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '1px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)', color: 'var(--accent-red)' }}>
           Azmar Mandi
         </h1>
         <h2 style={{ fontSize: '20px', fontWeight: '800', textTransform: 'uppercase', marginTop: '4px', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
@@ -31,22 +31,22 @@ export default function PromoBanner() {
 
         <button style={{ 
           marginTop: '24px', 
-          background: 'linear-gradient(to right, #fae0a2, #e3b751)', 
+          background: 'var(--accent-red)',
           border: 'none', 
           padding: '10px 24px', 
           borderRadius: '20px',
           fontWeight: 'bold',
-          color: 'black',
-          boxShadow: '0 4px 12px rgba(227, 183, 81, 0.4)'
+          color: 'white',
+          boxShadow: '0 4px 12px rgba(189, 29, 75, 0.4)'
         }}>
           Celebrate with us &gt;
         </button>
       </div>
       
       {/* Decorative elements */}
-      <div style={{ position: 'absolute', top: '10%', left: '5%', color: 'var(--accent-gold)', fontSize: '24px' }}>✨</div>
-      <div style={{ position: 'absolute', top: '20%', right: '10%', color: 'var(--accent-gold)', fontSize: '20px' }}>🎉</div>
-      <div style={{ position: 'absolute', bottom: '15%', left: '15%', color: 'var(--accent-gold)', fontSize: '16px' }}>🌟</div>
+      <div style={{ position: 'absolute', top: '10%', left: '5%', color: 'var(--accent-red)', fontSize: '24px' }}>✨</div>
+      <div style={{ position: 'absolute', top: '20%', right: '10%', color: 'var(--accent-red)', fontSize: '20px' }}>🎉</div>
+      <div style={{ position: 'absolute', bottom: '15%', left: '15%', color: 'var(--accent-red)', fontSize: '16px' }}>🌟</div>
     </div>
   );
 }

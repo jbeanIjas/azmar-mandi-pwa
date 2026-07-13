@@ -5,7 +5,6 @@ import SearchBar from '../components/SearchBar';
 import PromoBanner from '../components/PromoBanner';
 import CategoryScroll from '../components/CategoryScroll';
 import RestaurantCard from '../components/RestaurantCard';
-import BottomNav from '../components/BottomNav';
 import Footer from '../components/Footer';
 import prisma from '../lib/prisma';
 
@@ -20,7 +19,7 @@ export default async function Home() {
   return (
     <main style={{ paddingBottom: '80px', minHeight: '100vh' }}>
       <div style={{ 
-        background: 'linear-gradient(135deg, #7c1212 0%, #b81d22 100%)', 
+        background: 'var(--accent-red)',
         paddingBottom: '24px',
         borderBottomLeftRadius: '24px',
         borderBottomRightRadius: '24px',
@@ -107,7 +106,6 @@ export default async function Home() {
       })}
       
       <Footer />
-      <BottomNav />
     </main>
   );
 }

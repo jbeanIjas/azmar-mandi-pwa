@@ -117,8 +117,8 @@ export default function Cart() {
           bottom: '24px',
           right: '24px',
           zIndex: 40,
-          background: 'linear-gradient(135deg, #f4d068 0%, #c19a3b 100%)',
-          color: '#121215',
+          background: 'var(--accent-red)',
+          color: 'var(--bg-dark)',
           padding: '16px',
           borderRadius: '50%',
           boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
@@ -133,7 +133,7 @@ export default function Cart() {
               position: 'absolute',
               top: '-8px',
               right: '-8px',
-              background: '#dc2626',
+              background: 'var(--accent-red)',
               color: 'white',
               fontSize: '10px',
               fontWeight: 'bold',
@@ -143,7 +143,7 @@ export default function Cart() {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: '50%',
-              border: '2px solid #121215'
+              border: '2px solid var(--bg-dark)'
             }}>
               {totalItems}
             </span>
@@ -176,9 +176,9 @@ export default function Cart() {
           width: '100%',
           maxWidth: '450px',
           height: '100vh',
-          backgroundColor: '#121215',
+          backgroundColor: 'var(--bg-dark)',
           zIndex: 100,
-          borderLeft: '1px solid rgba(244,208,104,0.2)',
+          borderLeft: '1px solid rgba(189,29,75,0.2)',
           transform: isCartOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
@@ -187,7 +187,7 @@ export default function Cart() {
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px', borderBottom: '1px solid rgba(244,208,104,0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px', borderBottom: '1px solid rgba(189,29,75,0.1)' }}>
           <h2 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: 'white', margin: 0 }}>
             YOUR CART
           </h2>
@@ -212,9 +212,9 @@ export default function Cart() {
             items.map((item) => (
               <div
                 key={item.id}
-                style={{ display: 'flex', gap: '16px', backgroundColor: '#0a0a0c', padding: '12px', border: '1px solid rgba(244,208,104,0.1)' }}
+                style={{ display: 'flex', gap: '16px', backgroundColor: '#0a0a0c', padding: '12px', border: '1px solid rgba(189,29,75,0.1)' }}
               >
-                <div style={{ position: 'relative', width: '80px', height: '80px', backgroundColor: '#121215', border: '1px solid rgba(244,208,104,0.05)', flexShrink: 0 }}>
+                <div style={{ position: 'relative', width: '80px', height: '80px', backgroundColor: 'var(--bg-dark)', border: '1px solid rgba(189,29,75,0.05)', flexShrink: 0 }}>
                   <Image
                     src={item.image}
                     alt={item.name}
@@ -234,7 +234,7 @@ export default function Cart() {
                       <X size={16} />
                     </button>
                   </div>
-                  <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--accent-gold)' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--accent-red)' }}>
                     {item.price}
                   </span>
                   
@@ -242,7 +242,7 @@ export default function Cart() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(244,208,104,0.2)', backgroundColor: 'transparent', color: 'var(--accent-gold)', cursor: 'pointer' }}
+                      style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(189,29,75,0.2)', backgroundColor: 'transparent', color: 'var(--accent-red)', cursor: 'pointer' }}
                     >
                       <Minus size={12} />
                     </button>
@@ -251,7 +251,7 @@ export default function Cart() {
                     </span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(244,208,104,0.2)', backgroundColor: 'transparent', color: 'var(--accent-gold)', cursor: 'pointer' }}
+                      style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(189,29,75,0.2)', backgroundColor: 'transparent', color: 'var(--accent-red)', cursor: 'pointer' }}
                     >
                       <Plus size={12} />
                     </button>
@@ -263,12 +263,12 @@ export default function Cart() {
         </div>
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid rgba(244,208,104,0.1)', padding: '24px', backgroundColor: '#121215' }}>
+        <div style={{ borderTop: '1px solid rgba(189,29,75,0.1)', padding: '24px', backgroundColor: 'var(--bg-dark)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <span style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.7)' }}>
               Total
             </span>
-            <span style={{ fontSize: '24px', fontWeight: '900', color: 'var(--accent-gold)' }}>
+            <span style={{ fontSize: '24px', fontWeight: '900', color: 'var(--accent-red)' }}>
               ₹{cartTotal.toFixed(0)}
             </span>
           </div>
@@ -277,9 +277,9 @@ export default function Cart() {
             <button
               onClick={() => setOrderType('pickup')}
               style={{ flex: 1, padding: '8px 0', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s',
-                backgroundColor: orderType === 'pickup' ? 'rgba(244,208,104,0.1)' : 'transparent',
-                border: orderType === 'pickup' ? '1px solid var(--accent-gold)' : '1px solid rgba(244,208,104,0.2)',
-                color: orderType === 'pickup' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.5)'
+                backgroundColor: orderType === 'pickup' ? 'rgba(189,29,75,0.1)' : 'transparent',
+                border: orderType === 'pickup' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
+                color: orderType === 'pickup' ? 'var(--accent-red)' : 'rgba(255,255,255,0.5)'
               }}
             >
               Pickup
@@ -287,9 +287,9 @@ export default function Cart() {
             <button
               onClick={() => setOrderType('delivery')}
               style={{ flex: 1, padding: '8px 0', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s',
-                backgroundColor: orderType === 'delivery' ? 'rgba(244,208,104,0.1)' : 'transparent',
-                border: orderType === 'delivery' ? '1px solid var(--accent-gold)' : '1px solid rgba(244,208,104,0.2)',
-                color: orderType === 'delivery' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.5)'
+                backgroundColor: orderType === 'delivery' ? 'rgba(189,29,75,0.1)' : 'transparent',
+                border: orderType === 'delivery' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
+                color: orderType === 'delivery' ? 'var(--accent-red)' : 'rgba(255,255,255,0.5)'
               }}
             >
               Delivery
@@ -297,9 +297,9 @@ export default function Cart() {
           </div>
 
           {orderType === 'delivery' && (
-            <div style={{ marginBottom: '24px', padding: '16px', border: '1px solid rgba(244,208,104,0.2)', backgroundColor: '#0a0a0c', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ marginBottom: '24px', padding: '16px', border: '1px solid rgba(189,29,75,0.2)', backgroundColor: '#0a0a0c', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <MapPin size={16} color="var(--accent-gold)" style={{ marginTop: '2px', flexShrink: 0 }} />
+                <MapPin size={16} color="var(--accent-red)" style={{ marginTop: '2px', flexShrink: 0 }} />
                 <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, margin: 0 }}>
                   We currently only deliver within a {MAX_DISTANCE_KM}km radius of our restaurant.
                 </p>
@@ -308,7 +308,7 @@ export default function Cart() {
               {locationStatus === 'idle' && (
                 <button
                   onClick={handleVerifyLocation}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px 0', border: '1px solid var(--accent-gold)', background: 'transparent', color: 'var(--accent-gold)', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px 0', border: '1px solid var(--accent-red)', background: 'transparent', color: 'var(--accent-red)', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer' }}
                 >
                   <Navigation size={12} />
                   <span>Verify My Location</span>
@@ -316,7 +316,7 @@ export default function Cart() {
               )}
 
               {locationStatus === 'loading' && (
-                <div style={{ fontSize: '12px', color: 'var(--accent-gold)', textAlign: 'center', padding: '8px 0', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <div style={{ fontSize: '12px', color: 'var(--accent-red)', textAlign: 'center', padding: '8px 0', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                   Locating...
                 </div>
               )}
@@ -347,9 +347,9 @@ export default function Cart() {
             <button
               onClick={() => setPaymentMethod('cod')}
               style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 0', cursor: 'pointer', transition: 'all 0.2s',
-                backgroundColor: paymentMethod === 'cod' ? 'rgba(244,208,104,0.1)' : 'transparent',
-                border: paymentMethod === 'cod' ? '1px solid var(--accent-gold)' : '1px solid rgba(244,208,104,0.2)',
-                color: paymentMethod === 'cod' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.5)'
+                backgroundColor: paymentMethod === 'cod' ? 'rgba(189,29,75,0.1)' : 'transparent',
+                border: paymentMethod === 'cod' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
+                color: paymentMethod === 'cod' ? 'var(--accent-red)' : 'rgba(255,255,255,0.5)'
               }}
             >
               <Banknote size={16} />
@@ -358,9 +358,9 @@ export default function Cart() {
             <button
               onClick={() => setPaymentMethod('upi')}
               style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 0', cursor: 'pointer', transition: 'all 0.2s',
-                backgroundColor: paymentMethod === 'upi' ? 'rgba(244,208,104,0.1)' : 'transparent',
-                border: paymentMethod === 'upi' ? '1px solid var(--accent-gold)' : '1px solid rgba(244,208,104,0.2)',
-                color: paymentMethod === 'upi' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.5)'
+                backgroundColor: paymentMethod === 'upi' ? 'rgba(189,29,75,0.1)' : 'transparent',
+                border: paymentMethod === 'upi' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
+                color: paymentMethod === 'upi' ? 'var(--accent-red)' : 'rgba(255,255,255,0.5)'
               }}
             >
               <Smartphone size={16} />
@@ -384,8 +384,8 @@ export default function Cart() {
               letterSpacing: '0.1em',
               border: 'none',
               cursor: (items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')) ? 'not-allowed' : 'pointer',
-              background: (items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')) ? '#374151' : 'linear-gradient(135deg, #f4d068 0%, #c19a3b 100%)',
-              color: (items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')) ? '#6b7280' : '#121215',
+              background: (items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')) ? '#374151' : 'var(--accent-red)',
+              color: (items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')) ? '#6b7280' : 'var(--bg-dark)',
             }}
           >
             <span>Checkout via WhatsApp</span>
