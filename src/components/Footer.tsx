@@ -1,60 +1,19 @@
-import Link from "next/link";
-import { Phone, Mail, MapPin } from "lucide-react";
-import React from 'react';
+import { Clock3, MapPin, Phone } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer style={{
-      position: 'relative',
-      backgroundColor: 'var(--bg-dark)',
-      borderTop: '1px solid rgba(189, 29, 75, 0.15)',
-      padding: '48px 16px',
-      overflow: 'hidden'
-    }}>
-      <div style={{ position: 'relative', maxWidth: '1200px', margin: '0 auto', zIndex: 10 }}>
-        
-        {/* Brand Info */}
-        <div style={{ marginBottom: '48px' }}>
-          <Link href="/" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', letterSpacing: '0.2em', color: 'white' }}>
-              AZMAR MANDI
-            </span>
-            <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.3em', color: 'var(--accent-red)', fontWeight: '600', marginTop: '-4px' }}>
-              Crafted The Arabian Way
-            </span>
-          </Link>
-          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, maxWidth: '320px', marginTop: '24px' }}>
-            Savor the culinary heritage of Yemen and the Arabian Gulf. Every dish is cooked using time-honored slow-cooking techniques and fresh, premium ingredients.
-          </p>
-        </div>
-
-        {/* Contact Info */}
-        <div style={{ marginBottom: '48px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '0.1em', color: 'var(--accent-red)', textTransform: 'uppercase', marginBottom: '24px' }}>
-            Contact Info
-          </h3>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px', color: 'rgba(255,255,255,0.7)', fontSize: '14px' }}>
-            <li style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-              <MapPin size={20} color="var(--accent-red)" />
-              <span>Jumeirah Beach Road, Block D, Dubai, UAE</span>
-            </li>
-            <li style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <Phone size={20} color="var(--accent-red)" />
-              <span>+971 4 123 4567</span>
-            </li>
-            <li style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <Mail size={20} color="var(--accent-red)" />
-              <span>info@azmarmandi.com</span>
-            </li>
-          </ul>
-        </div>
-
-        {/* Bottom Bar */}
-        <div style={{ borderTop: '1px solid rgba(189, 29, 75, 0.1)', paddingTop: '32px', fontSize: '12px', color: 'rgba(255,255,255,0.4)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <p style={{ margin: 0 }}>© {new Date().getFullYear()} AZMAR MANDI. All rights reserved.</p>
-        </div>
-
+    <footer className="site-footer">
+      <div className="footer-brand">
+        <span>AM</span>
+        <div><strong>AZMAR MANDI</strong><small>Crafted the Arabian way</small></div>
       </div>
+      <p>Slow-cooked Arabian flavours, prepared fresh for every order.</p>
+      <div className="footer-info">
+        <span><MapPin size={16} /> Jumeirah Beach Road, Dubai</span>
+        <span><Clock3 size={16} /> Open daily · 11 AM–12 AM</span>
+        <span><Phone size={16} /> +971 4 123 4567</span>
+      </div>
+      <small>© {new Date().getFullYear()} Azmar Mandi. All rights reserved.</small>
     </footer>
   );
 }

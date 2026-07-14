@@ -1,25 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import { ShoppingBag, X, Plus, Minus, Send, MapPin, Navigation, Banknote, Smartphone } from "lucide-react";
 import { useCart } from "../context/CartContext";
-
-const RESTAURANT_LAT = 8.475091650738907; // Trivandrum, Kerala
-const RESTAURANT_LNG = 76.94724385255535; // Trivandrum, Kerala
-const MAX_DISTANCE_KM = 5;
-
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in km
-}
+import { MAX_DISTANCE_KM, useLocation } from "../context/LocationContext";
+import AddressEditor from "./AddressEditor";
 
 export default function Cart() {
   const {
@@ -33,14 +19,17 @@ export default function Cart() {
   
   const [orderType, setOrderType] = React.useState<'delivery' | 'pickup'>('pickup');
   const [paymentMethod, setPaymentMethod] = React.useState<'cod' | 'upi'>('cod');
-  const [locationStatus, setLocationStatus] = React.useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [locationError, setLocationError] = React.useState('');
-  const [userLocation, setUserLocation] = React.useState<{lat: number, lng: number} | null>(null);
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const [isAddressEditorOpen, setIsAddressEditorOpen] = React.useState(false);
+  const {
+    fetchCurrentLocation,
+    isDeliveryAvailable,
+    locationAddress,
+    locationLat,
+    locationLng,
+    locationName,
+    locationStatus,
+  } = useLocation();
+  const deliveryReady = locationStatus === 'success' && isDeliveryAvailable && locationLat !== null && locationLng !== null;
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -53,39 +42,12 @@ export default function Cart() {
   }, [isCartOpen]);
 
   const handleVerifyLocation = () => {
-    setLocationStatus('loading');
-    setLocationError('');
-
-    if (!navigator.geolocation) {
-      setLocationStatus('error');
-      setLocationError('Geolocation is not supported by your browser.');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        
-        const distance = calculateDistance(latitude, longitude, RESTAURANT_LAT, RESTAURANT_LNG);
-        
-        if (distance <= MAX_DISTANCE_KM) {
-          setLocationStatus('success');
-        } else {
-          setLocationStatus('error');
-          setLocationError(`Sorry, you are ${distance.toFixed(1)}km away. We only deliver within ${MAX_DISTANCE_KM}km.`);
-        }
-      },
-      (error) => {
-        setLocationStatus('error');
-        setLocationError('Unable to retrieve your location. Please allow location access in your browser settings.');
-      }
-    );
+    fetchCurrentLocation();
   };
 
   const handleCheckout = () => {
     if (items.length === 0) return;
-    if (orderType === 'delivery' && locationStatus !== 'success') return;
+    if (orderType === 'delivery' && !deliveryReady) return;
 
     let message = `Hello Azmar Mandi, I would like to order for ${orderType.toUpperCase()}:\n\n`;
     items.forEach((item) => {
@@ -94,8 +56,9 @@ export default function Cart() {
     message += `\nTotal: ₹${cartTotal.toFixed(0)}`;
     message += `\nPayment Method: ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'UPI'}`;
 
-    if (orderType === 'delivery' && userLocation) {
-      message += `\n\nDelivery Location:\nhttps://www.google.com/maps?q=${userLocation.lat},${userLocation.lng}`;
+    if (orderType === 'delivery' && locationLat !== null && locationLng !== null) {
+      message += `\n\nDelivery Address:\n${locationName}, ${locationAddress}`;
+      message += `\nMap: https://www.google.com/maps?q=${locationLat},${locationLng}`;
     }
 
     const whatsappUrl = `https://wa.me/918590109472?text=${encodeURIComponent(
@@ -103,8 +66,6 @@ export default function Cart() {
     )}`;
     window.open(whatsappUrl, "_blank");
   };
-
-  if (!isMounted) return null;
 
   return (
     <>
@@ -118,7 +79,7 @@ export default function Cart() {
           right: '24px',
           zIndex: 40,
           background: 'var(--accent-red)',
-          color: 'var(--bg-dark)',
+          color: '#fff',
           padding: '16px',
           borderRadius: '50%',
           boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
@@ -143,7 +104,7 @@ export default function Cart() {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: '50%',
-              border: '2px solid var(--bg-dark)'
+              border: '2px solid #fff'
             }}>
               {totalItems}
             </span>
@@ -178,22 +139,23 @@ export default function Cart() {
           height: '100vh',
           backgroundColor: 'var(--bg-dark)',
           zIndex: 100,
-          borderLeft: '1px solid rgba(189,29,75,0.2)',
+          borderLeft: '1px solid var(--border-subtle)',
           transform: isCartOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '-10px 0 30px rgba(0,0,0,0.5)'
+          boxShadow: '-10px 0 30px rgba(33,33,33,0.14)'
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px', borderBottom: '1px solid rgba(189,29,75,0.1)' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: 'white', margin: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px', borderBottom: '1px solid var(--border-subtle)' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.05em', color: '#212121', margin: 0 }}>
             YOUR CART
           </h2>
           <button
             onClick={() => setIsCartOpen(false)}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+            aria-label="Close cart"
+            style={{ background: '#f4f2f2', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'grid', placeItems: 'center', color: '#555', cursor: 'pointer' }}
           >
             <X size={24} />
           </button>
@@ -202,7 +164,7 @@ export default function Cart() {
         {/* Cart Items */}
         <div style={{ flexGrow: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {items.length === 0 ? (
-            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', gap: '16px' }}>
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#999', gap: '16px' }}>
               <ShoppingBag size={48} opacity={0.2} />
               <p style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 Your cart is empty
@@ -212,9 +174,9 @@ export default function Cart() {
             items.map((item) => (
               <div
                 key={item.id}
-                style={{ display: 'flex', gap: '16px', backgroundColor: '#0a0a0c', padding: '12px', border: '1px solid rgba(189,29,75,0.1)' }}
+                style={{ display: 'flex', gap: '16px', backgroundColor: '#fafafa', padding: '12px', border: '1px solid var(--border-subtle)', borderRadius: '14px' }}
               >
-                <div style={{ position: 'relative', width: '80px', height: '80px', backgroundColor: 'var(--bg-dark)', border: '1px solid rgba(189,29,75,0.05)', flexShrink: 0 }}>
+                <div style={{ position: 'relative', width: '80px', height: '80px', backgroundColor: '#f2f2f2', border: '1px solid var(--border-subtle)', borderRadius: '10px', overflow: 'hidden', flexShrink: 0 }}>
                   <Image
                     src={item.image}
                     alt={item.name}
@@ -224,12 +186,12 @@ export default function Cart() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between', padding: '4px 0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: 'white', margin: 0 }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#212121', margin: 0 }}>
                       {item.name}
                     </h3>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
+                      style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}
                     >
                       <X size={16} />
                     </button>
@@ -263,9 +225,9 @@ export default function Cart() {
         </div>
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid rgba(189,29,75,0.1)', padding: '24px', backgroundColor: 'var(--bg-dark)' }}>
+        <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '24px', backgroundColor: '#fff' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <span style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.7)' }}>
+            <span style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666' }}>
               Total
             </span>
             <span style={{ fontSize: '24px', fontWeight: '900', color: 'var(--accent-red)' }}>
@@ -279,7 +241,7 @@ export default function Cart() {
               style={{ flex: 1, padding: '8px 0', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s',
                 backgroundColor: orderType === 'pickup' ? 'rgba(189,29,75,0.1)' : 'transparent',
                 border: orderType === 'pickup' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
-                color: orderType === 'pickup' ? 'var(--accent-red)' : 'rgba(255,255,255,0.5)'
+                color: orderType === 'pickup' ? 'var(--accent-red)' : '#777'
               }}
             >
               Pickup
@@ -289,7 +251,7 @@ export default function Cart() {
               style={{ flex: 1, padding: '8px 0', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s',
                 backgroundColor: orderType === 'delivery' ? 'rgba(189,29,75,0.1)' : 'transparent',
                 border: orderType === 'delivery' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
-                color: orderType === 'delivery' ? 'var(--accent-red)' : 'rgba(255,255,255,0.5)'
+                color: orderType === 'delivery' ? 'var(--accent-red)' : '#777'
               }}
             >
               Delivery
@@ -297,22 +259,16 @@ export default function Cart() {
           </div>
 
           {orderType === 'delivery' && (
-            <div style={{ marginBottom: '24px', padding: '16px', border: '1px solid rgba(189,29,75,0.2)', backgroundColor: '#0a0a0c', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ marginBottom: '24px', padding: '16px', border: '1px solid rgba(189,29,75,0.18)', borderRadius: '14px', backgroundColor: '#fff8fa', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                 <MapPin size={16} color="var(--accent-red)" style={{ marginTop: '2px', flexShrink: 0 }} />
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, margin: 0 }}>
+                <p style={{ fontSize: '12px', color: '#444', lineHeight: 1.5, margin: 0 }}>
                   We currently only deliver within a {MAX_DISTANCE_KM}km radius of our restaurant.
                 </p>
               </div>
               
               {locationStatus === 'idle' && (
-                <button
-                  onClick={handleVerifyLocation}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px 0', border: '1px solid var(--accent-red)', background: 'transparent', color: 'var(--accent-red)', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer' }}
-                >
-                  <Navigation size={12} />
-                  <span>Verify My Location</span>
-                </button>
+                <p style={{ margin: 0, color: '#666', fontSize: '12px' }}>Choose the exact delivery address on the map or use your current location.</p>
               )}
 
               {locationStatus === 'loading' && (
@@ -321,25 +277,35 @@ export default function Cart() {
                 </div>
               )}
 
-              {locationStatus === 'success' && (
+              {deliveryReady && (
                 <div style={{ fontSize: '12px', color: '#4ade80', textAlign: 'center', padding: '8px 0', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                  Location Verified! Proceed to checkout.
+                  Delivery address verified
                 </div>
               )}
 
-              {locationStatus === 'error' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ fontSize: '10px', color: '#f87171', textAlign: 'center', textTransform: 'uppercase', fontWeight: 'bold', padding: '0 8px' }}>
-                    {locationError}
-                  </div>
-                  <button
-                    onClick={handleVerifyLocation}
-                    style={{ width: '100%', fontSize: '10px', textDecoration: 'underline', color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer' }}
-                  >
-                    Try Again
-                  </button>
+              {locationStatus === 'success' && !isDeliveryAvailable && (
+                <div style={{ fontSize: '11px', color: '#f87171', textAlign: 'center', lineHeight: 1.45 }}>
+                  This address is outside our {MAX_DISTANCE_KM}km delivery area. Please choose another address.
                 </div>
               )}
+
+              {locationStatus === 'error' && <div style={{ fontSize: '11px', color: '#f87171', textAlign: 'center' }}>We could not access that location. Search for your address on the map instead.</div>}
+
+              {locationStatus === 'success' && (
+                <div style={{ padding: '10px', borderRadius: '8px', background: '#fff' }}>
+                  <strong style={{ display: 'block', color: '#212121', fontSize: '12px' }}>{locationName}</strong>
+                  <span style={{ display: 'block', marginTop: '3px', color: '#666', fontSize: '10px', lineHeight: 1.4 }}>{locationAddress}</span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => setIsAddressEditorOpen(true)} style={{ flex: 1, padding: '9px 6px', border: '1px solid var(--accent-red)', background: 'var(--accent-red)', color: '#fff', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', cursor: 'pointer' }}>
+                  Choose on map
+                </button>
+                <button onClick={handleVerifyLocation} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '9px 6px', border: '1px solid var(--accent-red)', background: '#fff', color: 'var(--accent-red)', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', cursor: 'pointer' }}>
+                  <Navigation size={12} /> Current location
+                </button>
+              </div>
             </div>
           )}
 
@@ -349,7 +315,7 @@ export default function Cart() {
               style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 0', cursor: 'pointer', transition: 'all 0.2s',
                 backgroundColor: paymentMethod === 'cod' ? 'rgba(189,29,75,0.1)' : 'transparent',
                 border: paymentMethod === 'cod' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
-                color: paymentMethod === 'cod' ? 'var(--accent-red)' : 'rgba(255,255,255,0.5)'
+                color: paymentMethod === 'cod' ? 'var(--accent-red)' : '#777'
               }}
             >
               <Banknote size={16} />
@@ -360,7 +326,7 @@ export default function Cart() {
               style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 0', cursor: 'pointer', transition: 'all 0.2s',
                 backgroundColor: paymentMethod === 'upi' ? 'rgba(189,29,75,0.1)' : 'transparent',
                 border: paymentMethod === 'upi' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
-                color: paymentMethod === 'upi' ? 'var(--accent-red)' : 'rgba(255,255,255,0.5)'
+                color: paymentMethod === 'upi' ? 'var(--accent-red)' : '#777'
               }}
             >
               <Smartphone size={16} />
@@ -370,7 +336,7 @@ export default function Cart() {
           
           <button
             onClick={handleCheckout}
-            disabled={items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')}
+            disabled={items.length === 0 || (orderType === 'delivery' && !deliveryReady)}
             style={{
               width: '100%',
               display: 'flex',
@@ -383,9 +349,9 @@ export default function Cart() {
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
               border: 'none',
-              cursor: (items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')) ? 'not-allowed' : 'pointer',
-              background: (items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')) ? '#374151' : 'var(--accent-red)',
-              color: (items.length === 0 || (orderType === 'delivery' && locationStatus !== 'success')) ? '#6b7280' : 'var(--bg-dark)',
+              cursor: (items.length === 0 || (orderType === 'delivery' && !deliveryReady)) ? 'not-allowed' : 'pointer',
+              background: (items.length === 0 || (orderType === 'delivery' && !deliveryReady)) ? '#374151' : 'var(--accent-red)',
+              color: (items.length === 0 || (orderType === 'delivery' && !deliveryReady)) ? '#6b7280' : '#fff',
             }}
           >
             <span>Checkout via WhatsApp</span>
@@ -393,6 +359,7 @@ export default function Cart() {
           </button>
         </div>
       </div>
+      {isAddressEditorOpen && <AddressEditor onClose={() => setIsAddressEditorOpen(false)} />}
     </>
   );
 }

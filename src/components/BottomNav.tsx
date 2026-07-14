@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { Home, Menu, Flame, Phone, ShoppingBag } from "lucide-react";
-import React, { useRef } from 'react';
+import React from 'react';
 import { useCart } from "../context/CartContext";
 import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
 import ScrollToPlugin from "gsap/ScrollToPlugin";
 
 gsap.registerPlugin(ScrollToPlugin);
@@ -60,13 +59,14 @@ export default function BottomNav() {
       bottom: 0,
       left: 0,
       width: '100%',
-      backgroundColor: 'var(--bg-dark)',
-      borderTop: '1px solid rgba(189, 29, 75, 0.2)',
+      backgroundColor: 'rgba(255,255,255,0.96)',
+      borderTop: '1px solid var(--border-subtle)',
       zIndex: 50,
-      padding: '12px 16px',
-      boxShadow: '0 -4px 20px rgba(0,0,0,0.5)',
+      padding: '10px 16px calc(10px + env(safe-area-inset-bottom))',
+      boxShadow: '0 -8px 30px rgba(33,33,33,0.08)',
+      backdropFilter: 'blur(18px)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: '720px', margin: '0 auto' }}>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.active;
@@ -82,7 +82,7 @@ export default function BottomNav() {
                 justifyContent: 'center',
                 gap: '4px',
                 width: '20%',
-                color: isActive ? 'var(--accent-red)' : 'rgba(255, 255, 255, 0.6)',
+                color: isActive ? 'var(--accent-red)' : '#929292',
                 textDecoration: 'none'
               }}
             >
@@ -106,7 +106,7 @@ export default function BottomNav() {
             justifyContent: 'center',
             gap: '4px',
             width: '20%',
-            color: 'rgba(255, 255, 255, 0.6)',
+            color: '#929292',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -130,7 +130,7 @@ export default function BottomNav() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '50%',
-                border: '1px solid var(--bg-dark)'
+                border: '2px solid #fff'
               }}>
                 {totalItems}
               </span>

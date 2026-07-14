@@ -19,26 +19,26 @@ export default async function CollectionPage({ params }: { params: Promise<{ cat
   const title = category.replace(/-/g, ' ').toUpperCase();
 
   return (
-    <main style={{ paddingBottom: '100px', minHeight: '100vh', backgroundColor: 'var(--bg-dark)' }}>
+    <main style={{ paddingBottom: '100px', minHeight: '100vh', backgroundColor: '#f8f7f6' }}>
       
       {/* Header */}
       <div style={{ 
         position: 'sticky', 
         top: 0, 
         zIndex: 40,
-        background: 'var(--accent-red)',
+        background: 'rgba(255,255,255,.96)',
         padding: '16px',
         display: 'flex',
         alignItems: 'center',
         gap: '16px',
-        borderBottomLeftRadius: '24px',
-        borderBottomRightRadius: '24px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+        borderBottom: '1px solid var(--border-subtle)',
+        boxShadow: '0 8px 24px rgba(33,33,33,.06)',
+        backdropFilter: 'blur(16px)'
       }}>
-        <Link href="/" style={{ color: 'white' }}>
+        <Link href="/" style={{ display: 'grid', placeItems: 'center', width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(189,29,75,.1)', color: 'var(--accent-red)' }}>
           <ArrowLeft size={24} />
         </Link>
-        <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', margin: 0, letterSpacing: '0.1em' }}>
+        <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#212121', margin: 0, letterSpacing: '0.04em' }}>
           {title}
         </h1>
       </div>
@@ -49,7 +49,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ cat
         </p>
 
         {items.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#888' }}>
             <p>No items found in this category.</p>
           </div>
         ) : (

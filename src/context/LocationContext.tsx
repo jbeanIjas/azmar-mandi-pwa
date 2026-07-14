@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 // Coordinates for the restaurant (Thiruvananthapuram)
 export const RESTAURANT_LAT = 8.475091650738907;
@@ -34,6 +34,8 @@ interface LocationContextType {
   isDeliveryAvailable: boolean;
   locationName: string;
   locationAddress: string;
+  locationLat: number | null;
+  locationLng: number | null;
   savedAddresses: SavedAddress[];
   fetchCurrentLocation: () => void;
   setLocationManually: (name: string, address: string, lat: number, lng: number) => void;
@@ -47,6 +49,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [isDeliveryAvailable, setIsDeliveryAvailable] = useState<boolean>(false);
   const [locationName, setLocationName] = useState('Manacaud');
   const [locationAddress, setLocationAddress] = useState('Thiruvananthapuram, Kerala,...');
+  const [locationLat, setLocationLat] = useState<number | null>(null);
+  const [locationLng, setLocationLng] = useState<number | null>(null);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
 
   const addSavedAddress = (address: Omit<SavedAddress, 'id'>) => {
@@ -57,6 +61,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const setLocationManually = (name: string, address: string, lat: number, lng: number) => {
     setLocationName(name);
     setLocationAddress(address);
+    setLocationLat(lat);
+    setLocationLng(lng);
     const distance = calculateDistance(lat, lng, RESTAURANT_LAT, RESTAURANT_LNG);
     setIsDeliveryAvailable(distance <= MAX_DISTANCE_KM);
     setLocationStatus('success');
@@ -72,17 +78,17 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        setLocationLat(latitude);
+        setLocationLng(longitude);
         const distance = calculateDistance(latitude, longitude, RESTAURANT_LAT, RESTAURANT_LNG);
         setIsDeliveryAvailable(distance <= MAX_DISTANCE_KM);
         
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const res = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
           const data = await res.json();
-          if (data && data.address) {
-            const name = data.address.suburb || data.address.neighbourhood || data.address.city || 'Current Location';
-            const address = [data.address.city || data.address.town || data.address.county, data.address.state].filter(Boolean).join(', ');
-            setLocationName(name);
-            setLocationAddress(address || 'Location found');
+          if (data?.result) {
+            setLocationName(data.result.name || 'Current Location');
+            setLocationAddress(data.result.displayName || 'Location found');
           }
         } catch (e) {
           console.error("Geocoding failed", e);
@@ -107,6 +113,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       isDeliveryAvailable, 
       locationName, 
       locationAddress, 
+      locationLat,
+      locationLng,
       savedAddresses,
       fetchCurrentLocation,
       setLocationManually,

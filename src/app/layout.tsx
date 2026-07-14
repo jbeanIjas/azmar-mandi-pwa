@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Poppins } from "next/font/google";
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 import { CartProvider } from "../context/CartContext";
 import { LocationProvider } from "../context/LocationContext";
 import Cart from "../components/Cart";
@@ -18,17 +19,24 @@ const poppins = Poppins({
 });
 
 export const viewport: Viewport = {
-  themeColor: '#212121',
+  themeColor: '#bd1d4b',
+  colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
 };
 
 export const metadata: Metadata = {
   title: "Azmar Mandi - Authentic Arabian Flavors",
   description: "Experience the true taste of Arabia at Azmar Mandi. Order online for delivery or pickup.",
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'Azmar Mandi',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
     apple: '/icons/icon-192x192.png',
   }

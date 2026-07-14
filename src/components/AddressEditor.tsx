@@ -1,228 +1,350 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Crosshair, MapPin, Phone, Search, ChevronRight } from 'lucide-react';
-import { useLocation } from '../context/LocationContext';
+import type { Map as LeafletMap } from 'leaflet';
+import { ArrowLeft, ChevronRight, Crosshair, Loader2, MapPin, Phone, Search, X } from 'lucide-react';
+import {
+  RESTAURANT_LAT,
+  RESTAURANT_LNG,
+  useLocation,
+} from '../context/LocationContext';
 
 interface AddressEditorProps {
   onClose: () => void;
+  initialSearch?: string;
 }
 
-export default function AddressEditor({ onClose }: AddressEditorProps) {
-  const [mounted, setMounted] = useState(false);
-  const { setLocationManually, addSavedAddress, fetchCurrentLocation } = useLocation();
+type SearchResult = {
+  lat: number;
+  lng: number;
+  name: string;
+  displayName: string;
+};
 
-  useEffect(() => {
-    setMounted(true);
+export default function AddressEditor({ onClose, initialSearch = '' }: AddressEditorProps) {
+  const [mapReady, setMapReady] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isResolvingAddress, setIsResolvingAddress] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedName, setSelectedName] = useState('Selected location');
+  const [selectedAddress, setSelectedAddress] = useState('');
+  const [selectedCoords, setSelectedCoords] = useState({
+    lat: RESTAURANT_LAT,
+    lng: RESTAURANT_LNG,
+  });
+  const [addressDetails, setAddressDetails] = useState('');
+  const [receiverName, setReceiverName] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const {
+    addSavedAddress,
+    locationLat,
+    locationLng,
+    setLocationManually,
+  } = useLocation();
+
+  const mapElementRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const reverseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reverseRequestRef = useRef(0);
+  const initialSearchRanRef = useRef(false);
+
+  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+    const requestId = ++reverseRequestRef.current;
+    setIsResolvingAddress(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`);
+      const data = await response.json();
+      if (!response.ok || !data.result) {
+        throw new Error(data.error || 'Address could not be found.');
+      }
+      if (requestId !== reverseRequestRef.current) return;
+
+      setSelectedName(data.result.name);
+      setSelectedAddress(data.result.displayName);
+    } catch (requestError) {
+      if (requestId !== reverseRequestRef.current) return;
+      setSelectedAddress('');
+      setError(requestError instanceof Error ? requestError.message : 'Address could not be found.');
+    } finally {
+      if (requestId === reverseRequestRef.current) setIsResolvingAddress(false);
+    }
   }, []);
 
-  const [addressDetails, setAddressDetails] = useState('');
-  const [name, setName] = useState('Ijas');
-  const [phone, setPhone] = useState('8590109472');
+  const searchAddress = useCallback(async (query: string) => {
+    setIsSearching(true);
+    setError('');
+    setSearchResults([]);
 
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPinBouncing, setIsPinBouncing] = useState(false);
+    try {
+      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Search failed.');
+      setSearchResults(data.results ?? []);
+      if (!data.results?.length) setError('No matching locations found. Try adding a city or postcode.');
+    } catch (searchError) {
+      setError(searchError instanceof Error ? searchError.message : 'Search failed.');
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const drawerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!mapElementRef.current || mapRef.current) return;
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    setIsPinBouncing(true);
+    let cancelled = false;
+    const initialLat = locationLat ?? RESTAURANT_LAT;
+    const initialLng = locationLng ?? RESTAURANT_LNG;
+
+    async function initializeMap() {
+      const L = await import('leaflet');
+      if (cancelled || !mapElementRef.current) return;
+
+      const map = L.map(mapElementRef.current, {
+        zoomControl: false,
+      }).setView([initialLat, initialLng], 16);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(map);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+      const updateCenter = () => {
+        const center = map.getCenter();
+        setSelectedCoords({ lat: center.lat, lng: center.lng });
+        if (reverseTimerRef.current) clearTimeout(reverseTimerRef.current);
+        reverseTimerRef.current = setTimeout(() => {
+          void reverseGeocode(center.lat, center.lng);
+        }, 700);
+      };
+
+      map.on('moveend', updateCenter);
+      mapRef.current = map;
+      setMapReady(true);
+      setSelectedCoords({ lat: initialLat, lng: initialLng });
+      void reverseGeocode(initialLat, initialLng);
+      window.setTimeout(() => map.invalidateSize(), 0);
+    }
+
+    void initializeMap();
+
+    return () => {
+      cancelled = true;
+      if (reverseTimerRef.current) clearTimeout(reverseTimerRef.current);
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, [locationLat, locationLng, reverseGeocode]);
+
+  useEffect(() => {
+    const query = initialSearch.trim();
+    if (!mapReady || query.length < 3 || initialSearchRanRef.current) return;
+    initialSearchRanRef.current = true;
+    void searchAddress(query);
+  }, [initialSearch, mapReady, searchAddress]);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      if (query.length < 3) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await fetch(
+          `/api/geocode?q=${encodeURIComponent(query)}&suggest=1`,
+          { signal: controller.signal }
+        );
+        const data = await response.json();
+        if (response.ok) setSearchResults(data.results ?? []);
+      } catch (suggestionError) {
+        if (!(suggestionError instanceof DOMException && suggestionError.name === 'AbortError')) {
+          console.error('Location suggestions failed', suggestionError);
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsSearching(false);
+      }
+    }, query.length < 3 ? 0 : 450);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchQuery]);
+
+  const handleSearch = (event: FormEvent) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (query.length < 3) {
+      setError('Enter at least 3 characters to search.');
+      return;
+    }
+
+    void searchAddress(query);
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    setPan({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
-    });
+  const selectSearchResult = (result: SearchResult) => {
+    setSelectedName(result.name);
+    setSelectedAddress(result.displayName);
+    setSelectedCoords({ lat: result.lat, lng: result.lng });
+    setSearchResults([]);
+    setSearchQuery('');
+    mapRef.current?.setView([result.lat, result.lng], 17);
   };
 
-  const handlePointerUp = () => {
-    setIsDragging(false);
-    setTimeout(() => setIsPinBouncing(false), 300);
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Location is not supported by this browser.');
+      return;
+    }
+
+    setIsResolvingAddress(true);
+    setError('');
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const next = { lat: coords.latitude, lng: coords.longitude };
+        setSelectedCoords(next);
+        mapRef.current?.setView([next.lat, next.lng], 18);
+        void reverseGeocode(next.lat, next.lng);
+      },
+      () => {
+        setIsResolvingAddress(false);
+        setError('Unable to access your location. Allow location permission and try again.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const handleSave = () => {
-    const fullAddress = addressDetails ? `Manacaud, Thiruvananthapuram, Kerala, India (${addressDetails})` : 'Manacaud, Thiruvananthapuram, Kerala, India';
-    const title = addressDetails || 'Home';
-    const lat = 8.475091650738907;
-    const lng = 76.94724385255535;
+    if (!selectedAddress || !receiverName.trim() || !phone.trim() || !addressDetails.trim()) {
+      setError('Select a location and complete all delivery details.');
+      return;
+    }
 
-    addSavedAddress({ name, title, address: fullAddress, phone, lat, lng });
-    setLocationManually(title, fullAddress, lat, lng);
+    const fullAddress = `${addressDetails.trim()}, ${selectedAddress}`;
+    const savedAddress = {
+      name: receiverName.trim(),
+      title: selectedName,
+      address: fullAddress,
+      phone: phone.trim(),
+      lat: selectedCoords.lat,
+      lng: selectedCoords.lng,
+    };
+
+    addSavedAddress(savedAddress);
+    setLocationManually(
+      savedAddress.title,
+      savedAddress.address,
+      savedAddress.lat,
+      savedAddress.lng
+    );
     onClose();
   };
 
-  if (!mounted) return null;
-
   return createPortal(
-    <div ref={containerRef} style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: '#1a1d24',
-      zIndex: 1100,
-      display: 'flex',
-      flexDirection: 'column',
-      userSelect: 'none'
-    }}>
-      <style>{`
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-      `}</style>
-      
-      {/* Mock Map Background (Static blocks to simulate streets) */}
-      <div 
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 0, cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-      >
-        <div style={{ position: 'absolute', width: '400%', height: '400%', top: '-150%', left: '-150%', background: '#1c2230', transform: `translate3d(${pan.x}px, ${pan.y}px, 0)`, transition: isDragging ? 'none' : 'transform 0.1s ease-out' }}>
-          {/* Simple visual mock of the map blocks in the screenshot */}
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div key={i} style={{ 
-              position: 'absolute', 
-              top: `${Math.random() * 100}%`, 
-              left: `${Math.random() * 100}%`, 
-              width: `${Math.random() * 150 + 50}px`, 
-              height: `${Math.random() * 150 + 50}px`, 
-              background: i % 2 === 0 ? '#252b3d' : '#2a3246', 
-              transform: `rotate(${Math.random() * 90}deg)`, 
-              borderRadius: '8px',
-              opacity: 0.8
-            }} />
-          ))}
-          
-          {/* Map Labels Mock */}
-          <div style={{ position: 'absolute', top: '45%', left: '48%', color: '#8892b0', fontSize: '12px', fontWeight: 'bold' }}>Sut Mother And Child Hospital</div>
-          <div style={{ position: 'absolute', top: '25%', left: '55%', color: '#8892b0', fontSize: '12px', fontWeight: 'bold' }}>Medical Mission Hospital</div>
-          <div style={{ position: 'absolute', top: '65%', left: '40%', color: '#8892b0', fontSize: '12px', fontWeight: 'bold' }}>Manacaud Post Office</div>
-        </div>
-      </div>
+    <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 1100, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ position: 'relative', flex: '1 1 46%', minHeight: '280px' }}>
+        <div ref={mapElementRef} aria-label="Delivery location map" style={{ position: 'absolute', inset: 0, background: '#d8d8d8' }} />
 
-      {/* Header Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '16px', gap: '16px', zIndex: 50, position: 'relative', background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)', pointerEvents: 'none' }}>
-        <button 
-          onClick={onClose}
-          style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer', pointerEvents: 'auto' }}
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, color: 'white' }}>Select delivery location</h1>
-      </div>
-
-      {/* Map Pin Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, position: 'relative', marginTop: '-100px' }}>
-        
-        {/* Pin */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', animation: isPinBouncing ? 'bounce 0.4s infinite' : 'none', transition: 'all 0.2s' }}>
-          <div style={{ background: 'var(--accent-red)', width: '32px', height: '32px', borderRadius: '50% 50% 50% 0', transform: 'rotate(-45deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 8px rgba(0,0,0,0.4)' }}>
-            <div style={{ width: '12px', height: '12px', background: 'rgba(0,0,0,0.3)', borderRadius: '50%' }} />
-          </div>
-          <div style={{ width: '8px', height: '4px', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', marginTop: '4px' }} />
-        </div>
-        
-        {/* Use Current Location Button */}
-        <button 
-          onClick={() => {
-            fetchCurrentLocation();
-            onClose();
-          }}
-          style={{ position: 'absolute', bottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--accent-red)', padding: '10px 20px', borderRadius: '24px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          <Crosshair size={18} />
-          Use current location
-        </button>
-      </div>
-
-      {/* Bottom Drawer Form */}
-      <div ref={drawerRef} style={{ 
-        background: 'var(--bg-dark)', 
-        borderTopLeftRadius: '24px', 
-        borderTopRightRadius: '24px', 
-        padding: '24px', 
-        zIndex: 10
-      }}>
-        <div style={{ width: '40px', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', margin: '0 auto 24px' }} />
-        
-        <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>Delivery details</div>
-        
-        <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '16px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.1)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <MapPin size={18} color="var(--accent-red)" />
-          </div>
-          <div style={{ flex: 1, fontSize: '16px', color: 'white', fontWeight: '500', lineHeight: '1.4' }}>
-            Manacaud, Thiruvananthapuram, Kerala, India
-          </div>
-          <ChevronRight />
-        </div>
-
-        <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px', padding: '0 16px' }}>
-          <input 
-            type="text" 
-            placeholder="Address details*" 
-            value={addressDetails}
-            onChange={(e) => setAddressDetails(e.target.value)}
-            style={{ width: '100%', background: 'transparent', border: 'none', color: 'white', fontSize: '16px', outline: 'none', padding: '16px 0' }}
-          />
-        </div>
-        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '-16px', marginBottom: '24px' }}>
-          E.g. Floor, House no.
-        </div>
-
-        <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>Receiver details for this address</div>
-        
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-          <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '12px 16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Name</div>
-            <input 
-              type="text" 
-              placeholder="e.g. Ijas"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{ width: '100%', background: 'transparent', border: 'none', color: 'white', fontSize: '16px', outline: 'none', fontWeight: '500' }}
-            />
-          </div>
-
-          <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '12px 16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Phone number</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Phone size={14} color="var(--text-secondary)" />
-              <input 
-                type="text" 
-                placeholder="8590109472"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                style={{ width: '100%', background: 'transparent', border: 'none', color: 'white', fontSize: '16px', outline: 'none', fontWeight: '500' }}
-              />
+        <div style={{ position: 'absolute', inset: '0 0 auto', zIndex: 500, padding: '14px', background: 'linear-gradient(rgba(255,255,255,.98), rgba(255,255,255,0))', pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button onClick={onClose} aria-label="Close location picker" style={{ width: '42px', height: '42px', flexShrink: 0, borderRadius: '50%', border: '1px solid var(--border-subtle)', background: '#fff', color: '#212121', display: 'grid', placeItems: 'center', cursor: 'pointer', boxShadow: '0 5px 18px rgba(33,33,33,.1)' }}>
+                <ArrowLeft size={21} />
+              </button>
+              <div style={{ minWidth: 0 }}>
+                <strong style={{ display: 'block', color: '#212121', fontSize: '15px' }}>Add delivery address</strong>
+                <span style={{ display: 'block', marginTop: '1px', color: '#747474', fontSize: '11px' }}>Search or move the map pin</span>
+              </div>
             </div>
+            <form onSubmit={handleSearch} className="location-search-shell location-search-shell--light">
+              <Search size={19} color="var(--accent-red)" style={{ flexShrink: 0 }} />
+              <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Area, street, landmark or postcode" aria-label="Search delivery address" className="location-search-input" autoComplete="off" />
+              {searchQuery && (
+                <button type="button" aria-label="Clear delivery address search" onClick={() => setSearchQuery('')} className="location-search-clear">
+                  <X size={15} />
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={isSearching}
+                aria-label="Search delivery address"
+                className="location-search-submit"
+                style={{ width: '44px', minWidth: '44px', padding: 0, display: 'grid', placeItems: 'center' }}
+              >
+                {isSearching ? <Loader2 size={17} className="location-spinner" /> : <Search size={18} />}
+              </button>
+            </form>
+          </div>
+
+          {searchQuery.trim().length >= 3 && (isSearching || searchResults.length > 0) && (
+            <div className="location-suggestions location-suggestions--light" style={{ pointerEvents: 'auto' }}>
+              <div className="location-suggestions-header">
+                <span>Suggested locations</span>
+                {searchResults.length > 0 && <span>{searchResults.length} results</span>}
+              </div>
+              {isSearching && searchResults.length === 0 ? (
+                <div className="location-suggestions-state"><Loader2 size={16} className="location-spinner" /> Searching locations…</div>
+              ) : searchResults.map((result) => (
+                <button key={`${result.lat}-${result.lng}`} onClick={() => selectSearchResult(result)} className="location-suggestion-item">
+                  <span className="location-suggestion-pin"><MapPin size={17} /></span>
+                  <span className="location-suggestion-copy">
+                    <strong className="location-suggestion-title">{result.name}</strong>
+                    <span className="location-suggestion-address">{result.displayName}</span>
+                  </span>
+                  <ChevronRight size={17} color="#aaa" style={{ flexShrink: 0 }} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div aria-hidden style={{ position: 'absolute', zIndex: 450, left: '50%', top: '50%', transform: 'translate(-50%, -100%)', color: 'var(--accent-red)', filter: 'drop-shadow(0 4px 3px rgba(0,0,0,.35))', pointerEvents: 'none' }}>
+          <MapPin size={42} fill="var(--accent-red)" stroke="#fff" strokeWidth={1.5} />
+        </div>
+
+        <button onClick={useCurrentLocation} disabled={!mapReady} style={{ position: 'absolute', zIndex: 450, right: '12px', bottom: '24px', display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 13px', borderRadius: '22px', border: '1px solid rgba(189,29,75,.35)', background: '#fff', color: 'var(--accent-red)', boxShadow: '0 4px 16px rgba(0,0,0,.24)', fontWeight: 800, cursor: mapReady ? 'pointer' : 'wait' }}>
+          <Crosshair size={17} /> Current location
+        </button>
+      </div>
+
+      <div style={{ flex: '0 1 auto', maxHeight: '54vh', overflowY: 'auto', padding: '20px', borderRadius: '22px 22px 0 0', background: '#fff', boxShadow: '0 -6px 22px rgba(33,33,33,.12)', zIndex: 600 }}>
+        <div style={{ width: '42px', height: '4px', borderRadius: '4px', background: '#ddd', margin: '0 auto 16px' }} />
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '14px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0, background: 'rgba(189,29,75,.14)', display: 'grid', placeItems: 'center' }}>
+            {isResolvingAddress ? <Loader2 size={18} color="var(--accent-red)" className="location-spinner" /> : <MapPin size={18} color="var(--accent-red)" />}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <strong style={{ color: '#212121', fontSize: '15px' }}>{isResolvingAddress ? 'Finding address…' : selectedName}</strong>
+            <p style={{ margin: '3px 0 0', color: '#747474', fontSize: '12px', lineHeight: 1.45 }}>{selectedAddress || 'Move the map or search to choose your delivery address.'}</p>
           </div>
         </div>
 
-        <button 
-          onClick={handleSave}
-          style={{ width: '100%', background: 'var(--accent-red)', color: 'white', border: 'none', padding: '16px', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          Save address
-        </button>
+        <input value={addressDetails} onChange={(event) => setAddressDetails(event.target.value)} placeholder="House number, building, floor *" style={{ width: '100%', boxSizing: 'border-box', marginBottom: '12px', padding: '13px 14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', outline: 'none', background: '#fafafa', color: '#212121', fontSize: '14px' }} />
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input value={receiverName} onChange={(event) => setReceiverName(event.target.value)} placeholder="Receiver name *" style={{ width: '50%', minWidth: 0, padding: '13px 14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', outline: 'none', background: '#fafafa', color: '#212121', fontSize: '14px' }} />
+          <label style={{ width: '50%', minWidth: 0, display: 'flex', alignItems: 'center', gap: '7px', padding: '0 12px', borderRadius: '10px', border: '1px solid var(--border-subtle)', background: '#fafafa', color: '#888' }}>
+            <Phone size={15} />
+            <input value={phone} onChange={(event) => setPhone(event.target.value.replace(/[^0-9+]/g, ''))} inputMode="tel" placeholder="Phone *" aria-label="Receiver phone number" style={{ width: '100%', minWidth: 0, padding: '13px 0', border: 0, outline: 0, background: 'transparent', color: '#212121', fontSize: '14px' }} />
+          </label>
+        </div>
 
+        {error && <p role="alert" style={{ margin: '10px 0 0', color: '#c62828', fontSize: '12px', lineHeight: 1.4 }}>{error}</p>}
+
+        <button onClick={handleSave} disabled={isResolvingAddress || !selectedAddress} style={{ width: '100%', marginTop: '16px', padding: '14px', borderRadius: '11px', border: 0, background: isResolvingAddress || !selectedAddress ? '#555' : 'var(--accent-red)', color: '#fff', fontSize: '15px', fontWeight: 800, cursor: isResolvingAddress || !selectedAddress ? 'not-allowed' : 'pointer' }}>
+          Confirm delivery address
+        </button>
       </div>
     </div>,
     document.body
   );
 }
-
-
