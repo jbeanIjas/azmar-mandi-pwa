@@ -6,6 +6,7 @@ import CategoryScroll from '../components/CategoryScroll';
 import RestaurantCard from '../components/RestaurantCard';
 import Footer from '../components/Footer';
 import prisma from '../lib/prisma';
+import { getPhoneSession } from '../lib/otpSession';
 
 const sections = [
   { id: 'signatures', title: 'Azmar signatures', eyebrow: 'Most loved' },
@@ -16,6 +17,7 @@ const sections = [
 ];
 
 export default async function Home() {
+  const phoneSession = await getPhoneSession();
   const menuItems = await prisma.menuItem.findMany();
   const recommendedItems = menuItems.filter((item) =>
     item.tags?.some((tag) => ['Best Seller', 'Signature', 'Classic'].includes(tag))
@@ -26,7 +28,7 @@ export default async function Home() {
   return (
     <main className="home-shell">
       <div className="home-top">
-        <Header />
+        <Header phone={phoneSession?.phone} />
         <SearchBar />
         <PromoBanner />
       </div>

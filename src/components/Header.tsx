@@ -6,8 +6,9 @@ import { useCart } from '../context/CartContext';
 import { useLocation } from '../context/LocationContext';
 import LocationSelector from './LocationSelector';
 import AddressEditor from './AddressEditor';
+import OtpLogin from './OtpLogin';
 
-export default function Header() {
+export default function Header({ phone }: { phone?: string }) {
   const { locationStatus, isDeliveryAvailable, locationName, locationAddress } = useLocation();
   const { items, setIsCartOpen } = useCart();
   const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
@@ -31,7 +32,7 @@ export default function Header() {
           <ShoppingBag size={20} />
           {itemCount > 0 && <span>{itemCount}</span>}
         </button>
-        <div className="profile-avatar" aria-label="Azmar Mandi profile">AM</div>
+        <OtpLogin phone={phone} />
       </header>
 
       {locationStatus === 'success' && (

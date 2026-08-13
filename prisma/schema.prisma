@@ -11,7 +11,7 @@ datasource db {
 }
 
 model Category {
-  id    String @id
+  id    String     @id
   name  String
   image String
   items MenuItem[]
