@@ -81,7 +81,7 @@ export default function BottomNav() {
       boxShadow: '0 -8px 30px rgba(33,33,33,0.08)',
       backdropFilter: 'blur(18px)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: '720px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '720px', margin: '0 auto' }}>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.active;
@@ -96,7 +96,8 @@ export default function BottomNav() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '4px',
-                width: '20%',
+                minWidth: '44px',
+                flex: '0 0 auto',
                 color: isActive ? 'var(--accent-red)' : '#929292',
                 textDecoration: 'none'
               }}
@@ -116,7 +117,7 @@ export default function BottomNav() {
           onClick={handleEventBookingClick}
           style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            gap: '4px', width: '20%', padding: 0, color: '#929292', background: 'none', border: 'none', cursor: 'pointer'
+            gap: '4px', minWidth: '44px', flex: '0 0 auto', padding: 0, color: '#929292', background: 'none', border: 'none', cursor: 'pointer'
           }}
         >
           <div className="nav-icon"><CalendarDays size={20} strokeWidth={1.5} /></div>
@@ -134,7 +135,8 @@ export default function BottomNav() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: '4px',
-            width: '20%',
+            minWidth: '44px',
+            flex: '0 0 auto',
             color: '#929292',
             background: 'none',
             border: 'none',
