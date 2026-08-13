@@ -154,7 +154,7 @@ export default function EventBooking({ isOpen, onClose }: EventBookingProps) {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-            <span style={{ display: 'grid', placeItems: 'center', width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(189,29,75,.1)', color: 'var(--accent-red)' }}>
+            <span style={{ display: 'grid', placeItems: 'center', width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(var(--accent-red-rgb),.1)', color: 'var(--accent-red)' }}>
               <CalendarDays size={20} />
             </span>
             <div>
@@ -188,7 +188,7 @@ export default function EventBooking({ isOpen, onClose }: EventBookingProps) {
                   const endOfDay = new Date(`${option.value}T23:59:59`);
                   const disabled = endOfDay.getTime() < earliestBooking.getTime();
                   return (
-                    <button key={option.value} type="button" disabled={disabled} onClick={() => selectDate(option.value)} aria-pressed={selected} style={{ display: 'flex', minWidth: '66px', padding: '9px 8px', flexDirection: 'column', alignItems: 'center', gap: '2px', border: selected ? '1px solid var(--accent-red)' : '1px solid var(--border-subtle)', borderRadius: '12px', background: selected ? 'rgba(189,29,75,.09)' : '#fafafa', color: selected ? 'var(--accent-red)' : '#555', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? .38 : 1 }}>
+                    <button key={option.value} type="button" disabled={disabled} onClick={() => selectDate(option.value)} aria-pressed={selected} style={{ display: 'flex', minWidth: '66px', padding: '9px 8px', flexDirection: 'column', alignItems: 'center', gap: '2px', border: selected ? '1px solid var(--accent-red)' : '1px solid var(--border-subtle)', borderRadius: '12px', background: selected ? 'rgba(var(--accent-red-rgb),.09)' : '#fafafa', color: selected ? 'var(--accent-red)' : '#555', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? .38 : 1 }}>
                       <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase' }}>{option.weekday}</span>
                       <strong style={{ fontSize: '18px', lineHeight: 1.1 }}>{option.day}</strong>
                       <span style={{ fontSize: '9px', textTransform: 'uppercase' }}>{option.month}</span>
@@ -209,7 +209,7 @@ export default function EventBooking({ isOpen, onClose }: EventBookingProps) {
                 {timeOptions.map((option) => {
                   const selected = eventTime === option.value;
                   const disabled = isScheduleTooSoon(eventDate, option.value);
-                  return <button key={option.value} type="button" disabled={disabled} onClick={() => selectTime(option.value)} aria-pressed={selected} style={{ padding: '10px 5px', border: selected ? '1px solid var(--accent-red)' : '1px solid var(--border-subtle)', borderRadius: '10px', background: selected ? 'rgba(189,29,75,.09)' : '#fafafa', color: selected ? 'var(--accent-red)' : '#555', fontSize: '10px', fontWeight: 800, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? .38 : 1 }}>{option.label}</button>;
+                  return <button key={option.value} type="button" disabled={disabled} onClick={() => selectTime(option.value)} aria-pressed={selected} style={{ padding: '10px 5px', border: selected ? '1px solid var(--accent-red)' : '1px solid var(--border-subtle)', borderRadius: '10px', background: selected ? 'rgba(var(--accent-red-rgb),.09)' : '#fafafa', color: selected ? 'var(--accent-red)' : '#555', fontSize: '10px', fontWeight: 800, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? .38 : 1 }}>{option.label}</button>;
                 })}
               </div>
               <label style={{ ...labelStyle, position: 'relative', marginTop: '9px' }}>

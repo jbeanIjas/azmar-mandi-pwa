@@ -312,7 +312,7 @@ export default function AddressEditor({ onClose, initialSearch = '' }: AddressEd
           <MapPin size={42} fill="var(--accent-red)" stroke="#fff" strokeWidth={1.5} />
         </div>
 
-        <button onClick={useCurrentLocation} disabled={!mapReady} style={{ position: 'absolute', zIndex: 450, right: '12px', bottom: '24px', display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 13px', borderRadius: '22px', border: '1px solid rgba(189,29,75,.35)', background: '#fff', color: 'var(--accent-red)', boxShadow: '0 4px 16px rgba(0,0,0,.24)', fontWeight: 800, cursor: mapReady ? 'pointer' : 'wait' }}>
+        <button onClick={useCurrentLocation} disabled={!mapReady} style={{ position: 'absolute', zIndex: 450, right: '12px', bottom: '24px', display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 13px', borderRadius: '22px', border: '1px solid rgba(var(--accent-red-rgb),.35)', background: '#fff', color: 'var(--accent-red)', boxShadow: '0 4px 16px rgba(0,0,0,.24)', fontWeight: 800, cursor: mapReady ? 'pointer' : 'wait' }}>
           <Crosshair size={17} /> Current location
         </button>
       </div>
@@ -320,7 +320,7 @@ export default function AddressEditor({ onClose, initialSearch = '' }: AddressEd
       <div style={{ flex: '0 1 auto', maxHeight: '54vh', overflowY: 'auto', padding: '20px', borderRadius: '22px 22px 0 0', background: '#fff', boxShadow: '0 -6px 22px rgba(33,33,33,.12)', zIndex: 600 }}>
         <div style={{ width: '42px', height: '4px', borderRadius: '4px', background: '#ddd', margin: '0 auto 16px' }} />
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '14px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0, background: 'rgba(189,29,75,.14)', display: 'grid', placeItems: 'center' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0, background: 'rgba(var(--accent-red-rgb),.14)', display: 'grid', placeItems: 'center' }}>
             {isResolvingAddress ? <Loader2 size={18} color="var(--accent-red)" className="location-spinner" /> : <MapPin size={18} color="var(--accent-red)" />}
           </div>
           <div style={{ minWidth: 0 }}>

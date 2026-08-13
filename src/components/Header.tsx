@@ -1,6 +1,8 @@
 "use client";
 
 import { ChevronDown, MapPin, ShoppingBag } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useLocation } from '../context/LocationContext';
@@ -19,6 +21,10 @@ export default function Header({ phone }: { phone?: string }) {
   return (
     <>
       <header className="app-header">
+        <Link className="header-brand" href="/" aria-label="Azmar Mandi home">
+          <Image src="/brand/azmar-mark.png" alt="" width={44} height={44} priority />
+          <span><strong>AZMAR</strong><small>MANDI</small></span>
+        </Link>
         <button className="location-trigger" onClick={() => setIsLocationSelectorOpen(true)}>
           <span className="location-icon"><MapPin size={18} /></span>
           <span className="location-copy">

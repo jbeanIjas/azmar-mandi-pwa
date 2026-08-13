@@ -1,10 +1,11 @@
 import { Clock3, MapPin, Phone } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="footer-brand">
-        <span>AM</span>
+        <span><Image src="/brand/azmar-mark.png" alt="Azmar Mandi" width={42} height={42} /></span>
         <div><strong>AZMAR MANDI</strong><small>Crafted the Arabian way</small></div>
       </div>
       <p>Slow-cooked Arabian flavours, prepared fresh for every order.</p>

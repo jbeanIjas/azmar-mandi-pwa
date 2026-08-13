@@ -35,7 +35,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ cat
         boxShadow: '0 8px 24px rgba(33,33,33,.06)',
         backdropFilter: 'blur(16px)'
       }}>
-        <Link href="/" style={{ display: 'grid', placeItems: 'center', width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(189,29,75,.1)', color: 'var(--accent-red)' }}>
+        <Link href="/" style={{ display: 'grid', placeItems: 'center', width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(var(--accent-red-rgb),.1)', color: 'var(--accent-red)' }}>
           <ArrowLeft size={24} />
         </Link>
         <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#212121', margin: 0, letterSpacing: '0.04em' }}>
