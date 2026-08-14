@@ -6,14 +6,36 @@ import prisma from '../../../lib/prisma';
 
 export default async function CollectionPage({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params;
+  const cat = category.toLowerCase();
   
-  const items = category.toLowerCase() === 'all' 
-    ? await prisma.menuItem.findMany()
-    : await prisma.menuItem.findMany({
-        where: {
-          categoryId: category.toLowerCase()
-        }
-      });
+  let items: Array<{ id: string; name: string; description: string; price: string; image: string; categoryId: string; tags: string[]; specs: any }> = [];
+  try {
+    items = cat === 'all' 
+      ? await prisma.menuItem.findMany()
+      : await prisma.menuItem.findMany({
+          where: {
+            categoryId: cat
+          }
+        });
+  } catch (error) {
+    console.error('Failed to load collection items:', error);
+    try {
+      const { menuItems: fallbackItems } = await import('../../../data/menuData');
+      const formatted = fallbackItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image,
+        categoryId: item.category,
+        tags: item.tags || [],
+        specs: item.specs || null,
+      }));
+      items = cat === 'all' ? formatted : formatted.filter((item) => item.categoryId === cat);
+    } catch {
+      items = [];
+    }
+  }
   
   // Format category title
   const title = category.replace(/-/g, ' ').toUpperCase();

@@ -17,8 +17,30 @@ const sections = [
 ];
 
 export default async function Home() {
-  const phoneSession = await getPhoneSession();
-  const menuItems = await prisma.menuItem.findMany();
+  const phoneSession = await getPhoneSession().catch(() => null);
+  
+  let menuItems: Array<{ id: string; name: string; description: string; price: string; image: string; categoryId: string; tags: string[]; specs: any }> = [];
+  try {
+    menuItems = await prisma.menuItem.findMany();
+  } catch (error) {
+    console.error('Failed to load menuItems from Prisma:', error);
+    try {
+      const { menuItems: fallbackItems } = await import('../data/menuData');
+      menuItems = fallbackItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image,
+        categoryId: item.category,
+        tags: item.tags || [],
+        specs: item.specs || null,
+      }));
+    } catch {
+      menuItems = [];
+    }
+  }
+
   const recommendedItems = menuItems.filter((item) =>
     item.tags?.some((tag) => ['Best Seller', 'Signature', 'Classic'].includes(tag))
   ).slice(0, 12);
