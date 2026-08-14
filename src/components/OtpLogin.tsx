@@ -19,7 +19,7 @@ export default function OtpLogin({ phone }: { phone?: string }) {
   const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   const [open, setOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'mobile' | 'email'>('mobile');
+  const [authMode] = useState<'mobile' | 'email'>('email');
   const [step, setStep] = useState<'input' | 'otp'>('input');
   
   const [mobile, setMobile] = useState('');
@@ -225,61 +225,23 @@ export default function OtpLogin({ phone }: { phone?: string }) {
               </div>
             ) : step === 'input' ? (
               <div>
-                <span className="otp-icon">{authMode === 'mobile' ? <Phone size= {26} /> : <Mail size={26} />}</span>
+                <span className="otp-icon"><Mail size={26} /></span>
                 <small>Welcome to Azmar</small>
                 <h2 id="otp-title">Sign in or Register</h2>
-                <p>Choose your preferred sign-in method below.</p>
-
-                {/* Mode Selector Tabs */}
-                <div className="otp-tabs">
-                  <button
-                    type="button"
-                    className={`otp-tab ${authMode === 'mobile' ? 'otp-tab--active' : ''}`}
-                    onClick={() => { setAuthMode('mobile'); setError(''); }}
-                  >
-                    <Phone size={14} /> Mobile OTP
-                  </button>
-                  <button
-                    type="button"
-                    className={`otp-tab ${authMode === 'email' ? 'otp-tab--active' : ''}`}
-                    onClick={() => { setAuthMode('email'); setError(''); }}
-                  >
-                    <Mail size={14} /> Email OTP
-                  </button>
-                </div>
+                <p>Enter your email or sign in with your social account.</p>
 
                 <form onSubmit={sendOtp}>
-                  {authMode === 'mobile' ? (
-                    <>
-                      <label htmlFor="otp-phone">Mobile number</label>
-                      <div className="otp-phone-field">
-                        <span>+91</span>
-                        <input
-                          id="otp-phone"
-                          inputMode="numeric"
-                          autoComplete="tel-national"
-                          maxLength={10}
-                          placeholder="98765 43210"
-                          value={mobile}
-                          onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <label htmlFor="otp-email">Email Address</label>
-                      <div className="otp-email-field">
-                        <input
-                          id="otp-email"
-                          type="email"
-                          autoComplete="email"
-                          placeholder="name@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
-                      </div>
-                    </>
-                  )}
+                  <label htmlFor="otp-email">Email Address</label>
+                  <div className="otp-email-field">
+                    <input
+                      id="otp-email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="name@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
 
                   {error && <p className="otp-error" role="alert">{error}</p>}
 
