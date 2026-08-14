@@ -81,7 +81,7 @@ export default function PrivacyPolicyPage() {
           You have the right to request access to or permanent deletion of your personal data at any time.
         </p>
         <p style={{ color: '#4a3f3d', fontSize: '14px' }}>
-          To request account or data deletion, please contact us at <a href="mailto:privacy@azmarmandi.com" style={{ color: '#6b0503', fontWeight: 'bold' }}>privacy@azmarmandi.com</a>. Upon verification, your profile and associated data will be permanently removed from our active databases within 30 days.
+          To request account or data deletion, please contact us at <a href="mailto:azmarmandi@gmail.com" style={{ color: '#6b0503', fontWeight: 'bold' }}>azmarmandi@gmail.com</a>. Upon verification, your profile and associated data will be permanently removed from our active databases within 30 days.
         </p>
       </section>
 
@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
         </p>
         <p style={{ color: '#4a3f3d', fontSize: '14px', marginTop: '8px' }}>
           <strong>Azmar Mandi Support</strong><br />
-          Email: <a href="mailto:privacy@azmarmandi.com" style={{ color: '#6b0503', fontWeight: 'bold' }}>privacy@azmarmandi.com</a>
+          Email: <a href="mailto:azmarmandi@gmail.com" style={{ color: '#6b0503', fontWeight: 'bold' }}>azmarmandi@gmail.com</a>
         </p>
       </section>
     </main>
