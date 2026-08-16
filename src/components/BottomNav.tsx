@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Menu, Flame, CalendarDays, ShoppingBag, ReceiptText } from "lucide-react";
+import { Home, Layers3, CalendarDays, ShoppingBag, ReceiptText } from "lucide-react";
 import React from 'react';
 import { useCart } from "../context/CartContext";
 import EventBooking from "./EventBooking";
@@ -21,9 +21,8 @@ export default function BottomNav() {
 
   const navItems = [
     { name: "Home", href: "/", icon: Home, active: true },
-    { name: "Signatures", href: "/#signatures", icon: Flame },
-    { name: "Mandi", href: "/#mandi", icon: Menu },
-    { name: "Orders", href: "/account/orders", icon: ReceiptText },
+    { name: "Collections", href: "/collections", icon: Layers3 },
+    { name: "Reorder", href: "/account/orders", icon: ReceiptText },
   ];
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {

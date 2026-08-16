@@ -27,6 +27,8 @@ export default function Cart() {
   const [checkoutError, setCheckoutError] = React.useState('');
   const [completedOrder, setCompletedOrder] = React.useState('');
   const [whatsappPhone, setWhatsappPhone] = React.useState('');
+  const [whatsappError, setWhatsappError] = React.useState('');
+  const whatsappInputRef = React.useRef<HTMLInputElement>(null);
   const {
     fetchCurrentLocation,
     isDeliveryAvailable,
@@ -55,6 +57,11 @@ export default function Cart() {
   const handleCheckout = async () => {
     if (items.length === 0) return;
     if (orderType === 'delivery' && !deliveryReady) return;
+    if (whatsappPhone.length !== 10) {
+      setWhatsappError('Please enter a valid 10-digit WhatsApp number.');
+      whatsappInputRef.current?.focus();
+      return;
+    }
     setCheckoutLoading(true);
     setCheckoutError('');
     try {
@@ -77,6 +84,8 @@ export default function Cart() {
       }
       clearCart();
       setCompletedOrder(result.orderNumber);
+      setIsCartOpen(false);
+      router.push(`/order-success?number=${encodeURIComponent(result.orderNumber)}`);
     } catch {
       setCheckoutError('Could not connect to the restaurant. Please try again.');
     } finally {
@@ -362,14 +371,15 @@ export default function Cart() {
             WhatsApp number for order updates
             <div style={{ display: 'flex', marginTop: '7px', alignItems: 'center', overflow: 'hidden', border: '1px solid rgba(189,29,75,0.22)', borderRadius: '10px', background: '#fafafa' }}>
               <span style={{ padding: '0 0 0 12px', color: '#777', fontSize: '13px' }}>+91</span>
-              <input aria-label="WhatsApp number" inputMode="tel" autoComplete="tel" value={whatsappPhone} onChange={(event) => setWhatsappPhone(event.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number" style={{ width: '100%', padding: '12px 10px', border: 0, outline: 0, background: 'transparent', color: '#212121', fontSize: '13px' }} />
+              <input ref={whatsappInputRef} aria-label="WhatsApp number" aria-invalid={Boolean(whatsappError)} aria-describedby={whatsappError ? 'whatsapp-number-error' : undefined} inputMode="tel" autoComplete="tel" value={whatsappPhone} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 10); setWhatsappPhone(value); if (value.length === 10) setWhatsappError(''); }} placeholder="10-digit mobile number" style={{ width: '100%', padding: '12px 10px', border: 0, outline: 0, background: 'transparent', color: '#212121', fontSize: '13px' }} />
             </div>
+            {whatsappError && <span id="whatsapp-number-error" role="alert" style={{ display: 'block', marginTop: '7px', color: '#b33535', fontSize: '10px', fontWeight: 700, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' }}>{whatsappError}</span>}
           </label>
           
           {checkoutError && <p role="alert" style={{ margin: '0 0 12px', padding: '10px', borderRadius: '9px', background: '#fff0f0', color: '#b33535', fontSize: '11px', lineHeight: 1.5 }}>{checkoutError}</p>}
           <button
             onClick={handleCheckout}
-            disabled={checkoutLoading || whatsappPhone.length !== 10 || items.length === 0 || (orderType === 'delivery' && !deliveryReady)}
+            disabled={checkoutLoading || items.length === 0 || (orderType === 'delivery' && !deliveryReady)}
             style={{
               width: '100%',
               display: 'flex',
