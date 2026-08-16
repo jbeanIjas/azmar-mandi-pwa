@@ -2,12 +2,14 @@
 
 import React, { useEffect } from "react";
 import Image from "next/image";
-import { ShoppingBag, X, Plus, Minus, Send, MapPin, Navigation, Banknote, Smartphone } from "lucide-react";
+import { ShoppingBag, X, Plus, Minus, CheckCircle2, MapPin, Navigation, Banknote, Smartphone } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCart } from "../context/CartContext";
 import { MAX_DISTANCE_KM, useLocation } from "../context/LocationContext";
 import AddressEditor from "./AddressEditor";
 
 export default function Cart() {
+  const router = useRouter();
   const {
     items,
     isCartOpen,
@@ -15,11 +17,16 @@ export default function Cart() {
     removeFromCart,
     updateQuantity,
     cartTotal,
+    clearCart,
   } = useCart();
   
   const [orderType, setOrderType] = React.useState<'delivery' | 'pickup'>('pickup');
   const [paymentMethod, setPaymentMethod] = React.useState<'cod' | 'upi'>('cod');
   const [isAddressEditorOpen, setIsAddressEditorOpen] = React.useState(false);
+  const [checkoutLoading, setCheckoutLoading] = React.useState(false);
+  const [checkoutError, setCheckoutError] = React.useState('');
+  const [completedOrder, setCompletedOrder] = React.useState('');
+  const [whatsappPhone, setWhatsappPhone] = React.useState('');
   const {
     fetchCurrentLocation,
     isDeliveryAvailable,
@@ -45,26 +52,36 @@ export default function Cart() {
     fetchCurrentLocation();
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (items.length === 0) return;
     if (orderType === 'delivery' && !deliveryReady) return;
-
-    let message = `Hello Azmar Mandi, I would like to order for ${orderType.toUpperCase()}:\n\n`;
-    items.forEach((item) => {
-      message += `${item.quantity}x ${item.name} - ${item.price}\n`;
-    });
-    message += `\nTotal: ₹${cartTotal.toFixed(0)}`;
-    message += `\nPayment Method: ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'UPI'}`;
-
-    if (orderType === 'delivery' && locationLat !== null && locationLng !== null) {
-      message += `\n\nDelivery Address:\n${locationName}, ${locationAddress}`;
-      message += `\nMap: https://www.google.com/maps?q=${locationLat},${locationLng}`;
+    setCheckoutLoading(true);
+    setCheckoutError('');
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+          orderType,
+          paymentMethod,
+          customerPhone: whatsappPhone,
+          delivery: orderType === 'delivery' ? { name: locationName, address: locationAddress, lat: locationLat, lng: locationLng } : undefined,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setCheckoutError(result.error || 'Could not place your order.');
+        if (response.status === 401) window.dispatchEvent(new Event('azmar:open-login'));
+        return;
+      }
+      clearCart();
+      setCompletedOrder(result.orderNumber);
+    } catch {
+      setCheckoutError('Could not connect to the restaurant. Please try again.');
+    } finally {
+      setCheckoutLoading(false);
     }
-
-    const whatsappUrl = `https://wa.me/918590109472?text=${encodeURIComponent(
-      message
-    )}`;
-    window.open(whatsappUrl, "_blank");
   };
 
   return (
@@ -163,7 +180,14 @@ export default function Cart() {
 
         {/* Cart Items */}
         <div style={{ flexGrow: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {items.length === 0 ? (
+          {completedOrder ? (
+            <div style={{ height: '100%', display: 'flex', padding: '30px', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#555', gap: '14px' }}>
+              <CheckCircle2 size={58} color="var(--accent-red)" />
+              <h3 style={{ margin: 0, color: '#212121', fontSize: '22px' }}>Order placed</h3>
+              <p style={{ margin: 0, lineHeight: 1.6, fontSize: '13px' }}>Your order <strong>{completedOrder}</strong> was sent to Azmar Mandi.</p>
+              <button onClick={() => { setIsCartOpen(false); router.push('/account/orders'); }} style={{ padding: '12px 18px', border: 0, borderRadius: '10px', background: 'var(--accent-red)', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>Track your order</button>
+            </div>
+          ) : items.length === 0 ? (
             <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#999', gap: '16px' }}>
               <ShoppingBag size={48} opacity={0.2} />
               <p style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -225,7 +249,7 @@ export default function Cart() {
         </div>
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '24px', backgroundColor: '#fff' }}>
+        {!completedOrder && <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '24px', backgroundColor: '#fff' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <span style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666' }}>
               Total
@@ -333,10 +357,19 @@ export default function Cart() {
               <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>UPI</span>
             </button>
           </div>
+
+          <label style={{ display: 'block', marginBottom: '18px', color: '#555', fontSize: '10px', fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+            WhatsApp number for order updates
+            <div style={{ display: 'flex', marginTop: '7px', alignItems: 'center', overflow: 'hidden', border: '1px solid rgba(189,29,75,0.22)', borderRadius: '10px', background: '#fafafa' }}>
+              <span style={{ padding: '0 0 0 12px', color: '#777', fontSize: '13px' }}>+91</span>
+              <input aria-label="WhatsApp number" inputMode="tel" autoComplete="tel" value={whatsappPhone} onChange={(event) => setWhatsappPhone(event.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number" style={{ width: '100%', padding: '12px 10px', border: 0, outline: 0, background: 'transparent', color: '#212121', fontSize: '13px' }} />
+            </div>
+          </label>
           
+          {checkoutError && <p role="alert" style={{ margin: '0 0 12px', padding: '10px', borderRadius: '9px', background: '#fff0f0', color: '#b33535', fontSize: '11px', lineHeight: 1.5 }}>{checkoutError}</p>}
           <button
             onClick={handleCheckout}
-            disabled={items.length === 0 || (orderType === 'delivery' && !deliveryReady)}
+            disabled={checkoutLoading || whatsappPhone.length !== 10 || items.length === 0 || (orderType === 'delivery' && !deliveryReady)}
             style={{
               width: '100%',
               display: 'flex',
@@ -354,10 +387,10 @@ export default function Cart() {
               color: (items.length === 0 || (orderType === 'delivery' && !deliveryReady)) ? '#6b7280' : '#fff',
             }}
           >
-            <span>Checkout via WhatsApp</span>
-            <Send size={16} />
+            <span>{checkoutLoading ? 'Placing order…' : 'Place order'}</span>
+            <CheckCircle2 size={16} />
           </button>
-        </div>
+        </div>}
       </div>
       {isAddressEditorOpen && <AddressEditor onClose={() => setIsAddressEditorOpen(false)} />}
     </>

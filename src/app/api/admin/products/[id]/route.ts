@@ -18,7 +18,7 @@ function readProductData(body: Record<string, unknown> | null) {
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAdminRequest(request)) return unauthorizedResponse();
+  if (!(await isAdminRequest(request))) return unauthorizedResponse();
   const { id } = await params;
   const data = readProductData(await request.json().catch(() => null));
   if (!data.name || !data.description || !data.price || !data.image || !data.categoryId) return Response.json({ error: 'All product fields are required.' }, { status: 400 });
@@ -30,7 +30,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAdminRequest(request)) return unauthorizedResponse();
+  if (!(await isAdminRequest(request))) return unauthorizedResponse();
   const { id } = await params;
   const product = await prisma.menuItem.delete({ where: { id } }).catch(() => null);
   if (!product) return Response.json({ error: 'Product not found.' }, { status: 404 });

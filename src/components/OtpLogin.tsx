@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle2, LogOut, Mail, Phone, ShieldCheck, UserRound, X
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { createClient } from '@/lib/supabaseClient';
+import { createClient, isSupabaseConfigured } from '@/lib/supabaseClient';
 
 const subscribeToHydration = () => () => {};
 
@@ -13,7 +13,7 @@ function maskedPhone(phone: string) {
   return `+91 ${digits.slice(0, 2)}••• ••${digits.slice(-3)}`;
 }
 
-export default function OtpLogin({ phone }: { phone?: string }) {
+function SupabaseOtpLogin({ phone }: { phone?: string }) {
   const router = useRouter();
   const supabase = createClient();
   const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
@@ -30,6 +30,12 @@ export default function OtpLogin({ phone }: { phone?: string }) {
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [userSession, setUserSession] = useState<{ email?: string; phone?: string; name?: string; avatar?: string } | null>(null);
+
+  useEffect(() => {
+    const openLogin = () => setOpen(true);
+    window.addEventListener('azmar:open-login', openLogin);
+    return () => window.removeEventListener('azmar:open-login', openLogin);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -221,6 +227,7 @@ export default function OtpLogin({ phone }: { phone?: string }) {
                   <p style={{ margin: '4px auto 14px', fontSize: '11px', color: '#666' }}>{displayEmailOrPhone}</p>
                 )}
                 <p>You are logged in and ready for faster ordering.</p>
+                <button className="otp-primary" onClick={() => { setOpen(false); router.push('/account/orders'); }}>My orders</button>
                 <button className="otp-primary otp-logout" onClick={logout}><LogOut size={17} /> Log out</button>
               </div>
             ) : step === 'input' ? (
@@ -342,4 +349,10 @@ export default function OtpLogin({ phone }: { phone?: string }) {
       )}
     </>
   );
+}
+
+export default function OtpLogin({ phone }: { phone?: string }) {
+  if (!isSupabaseConfigured) return null;
+
+  return <SupabaseOtpLogin phone={phone} />;
 }

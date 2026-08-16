@@ -12,6 +12,7 @@ interface CartContextType {
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
   addToCart: (item: MenuItem) => void;
+  addItemsToCart: (items: CartItem[]) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -54,6 +55,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsCartOpen(true);
   };
 
+  const addItemsToCart = (newItems: CartItem[]) => {
+    setItems((current) => {
+      const merged = new Map(current.map((item) => [item.id, item]));
+      for (const item of newItems) {
+        const existing = merged.get(item.id);
+        merged.set(item.id, { ...item, quantity: (existing?.quantity || 0) + item.quantity });
+      }
+      return [...merged.values()];
+    });
+    setIsCartOpen(true);
+  };
+
   const removeFromCart = (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
@@ -85,6 +98,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isCartOpen,
         setIsCartOpen,
         addToCart,
+        addItemsToCart,
         removeFromCart,
         updateQuantity,
         clearCart,

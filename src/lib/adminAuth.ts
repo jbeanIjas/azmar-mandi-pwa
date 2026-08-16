@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { NextRequest } from 'next/server';
+import { getCustomerIdentity } from './customerAuth';
 
 export const ADMIN_COOKIE = 'azmar_admin_session';
 
@@ -29,8 +30,11 @@ export function verifyAdminSession(value?: string) {
   return expectedBuffer.length === receivedBuffer.length && timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
-export function isAdminRequest(request: NextRequest) {
-  return verifyAdminSession(request.cookies.get(ADMIN_COOKIE)?.value);
+export async function isAdminRequest(request: NextRequest) {
+  if (verifyAdminSession(request.cookies.get(ADMIN_COOKIE)?.value)) return true;
+  const customer = await getCustomerIdentity();
+  const adminEmail = (process.env.ADMIN_EMAIL || 'azmarmandi@gmail.com').toLowerCase();
+  return customer?.email?.toLowerCase() === adminEmail;
 }
 
 export function unauthorizedResponse() {

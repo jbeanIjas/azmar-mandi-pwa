@@ -19,7 +19,7 @@ function productData(body: Record<string, unknown> | null) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAdminRequest(request)) return unauthorizedResponse();
+  if (!(await isAdminRequest(request))) return unauthorizedResponse();
   const data = productData(await request.json().catch(() => null));
   if (!data.id || !data.name || !data.description || !data.price || !data.image || !data.categoryId || !/^[a-z0-9-]+$/.test(data.id)) return Response.json({ error: 'All product fields and a valid ID are required.' }, { status: 400 });
   try {

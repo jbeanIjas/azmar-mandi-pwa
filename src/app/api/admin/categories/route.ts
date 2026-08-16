@@ -4,7 +4,7 @@ import prisma from '../../../../lib/prisma';
 import { isAdminRequest, unauthorizedResponse } from '../../../../lib/adminAuth';
 
 export async function POST(request: NextRequest) {
-  if (!isAdminRequest(request)) return unauthorizedResponse();
+  if (!(await isAdminRequest(request))) return unauthorizedResponse();
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const id = typeof body?.id === 'string' ? body.id.trim().toLowerCase() : '';
   const name = typeof body?.name === 'string' ? body.name.trim() : '';

@@ -28,3 +28,38 @@ model MenuItem {
   tags        String[]
   specs       Json?
 }
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  customerId      String
+  customerEmail   String?
+  customerPhone   String?
+  status          String      @default("PLACED")
+  orderType       String
+  paymentMethod   String
+  deliveryName    String?
+  deliveryAddress String?
+  deliveryLat     Float?
+  deliveryLng     Float?
+  total           Int
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  name      String
+  price     Int
+  image     String
+  quantity  Int
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}

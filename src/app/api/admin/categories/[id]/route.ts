@@ -4,7 +4,7 @@ import prisma from '../../../../../lib/prisma';
 import { isAdminRequest, unauthorizedResponse } from '../../../../../lib/adminAuth';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAdminRequest(request)) return unauthorizedResponse();
+  if (!(await isAdminRequest(request))) return unauthorizedResponse();
   const { id } = await params;
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const name = typeof body?.name === 'string' ? body.name.trim() : '';
@@ -18,7 +18,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAdminRequest(request)) return unauthorizedResponse();
+  if (!(await isAdminRequest(request))) return unauthorizedResponse();
   const { id } = await params;
   const productCount = await prisma.menuItem.count({ where: { categoryId: id } });
   if (productCount > 0) return Response.json({ error: 'Move or delete the products in this collection first.' }, { status: 409 });
