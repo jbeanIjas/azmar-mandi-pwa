@@ -13,12 +13,12 @@ function maskedPhone(phone: string) {
   return `+91 ${digits.slice(0, 2)}••• ••${digits.slice(-3)}`;
 }
 
-function SupabaseOtpLogin({ phone }: { phone?: string }) {
+function SupabaseOtpLogin({ phone, pageMode = false }: { phone?: string; pageMode?: boolean }) {
   const router = useRouter();
   const supabase = createClient();
   const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(pageMode);
   const [authMode] = useState<'mobile' | 'email'>('email');
   const [step, setStep] = useState<'input' | 'otp'>('input');
   
@@ -186,6 +186,81 @@ function SupabaseOtpLogin({ phone }: { phone?: string }) {
   const displayName = userSession?.name || userSession?.email || (userSession?.phone ? maskedPhone(userSession.phone) : phone);
   const displayEmailOrPhone = userSession?.name ? (userSession.email || (userSession.phone ? maskedPhone(userSession.phone) : '')) : null;
 
+  const dialog = (
+    <section className="otp-dialog" aria-labelledby="otp-title">
+      <button className="otp-close" onClick={() => pageMode ? router.back() : setOpen(false)} aria-label="Close login">
+        <X size={18} />
+      </button>
+
+      {displayName ? (
+        <div className="otp-account">
+          <span className="otp-icon" style={userSession?.avatar ? { padding: 0, overflow: 'hidden' } : undefined}>
+            {userSession?.avatar ? (
+              <img src={userSession.avatar} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <CheckCircle2 size={28} />
+            )}
+          </span>
+          <small>Verified Account</small>
+          <h2 id="otp-title">{displayName}</h2>
+          {displayEmailOrPhone && (
+            <p style={{ margin: '4px auto 14px', fontSize: '11px', color: '#666' }}>{displayEmailOrPhone}</p>
+          )}
+          <p>You are logged in and ready for faster ordering.</p>
+          <button className="otp-primary" onClick={() => router.push('/account/orders')}>My orders</button>
+          <button className="otp-primary otp-logout" onClick={logout}><LogOut size={17} /> Log out</button>
+        </div>
+      ) : step === 'input' ? (
+        <div>
+          <span className="otp-icon"><Mail size={26} /></span>
+          <small>Welcome to Azmar</small>
+          <h2 id="otp-title">Sign in or Register</h2>
+          <p>Enter your email or sign in with your social account.</p>
+
+          <form onSubmit={sendOtp}>
+            <label htmlFor="otp-email">Email Address</label>
+            <div className="otp-email-field">
+              <input id="otp-email" type="email" autoComplete="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            {error && <p className="otp-error" role="alert">{error}</p>}
+            <button className="otp-primary" disabled={loading || !email.includes('@')}>
+              {loading ? 'Sending code…' : 'Send Verification Code'}
+            </button>
+          </form>
+
+          <div className="otp-divider">Or continue with</div>
+          <div className="otp-social-grid">
+            {(['google', 'facebook', 'apple'] as const).map((provider) => (
+              <button key={provider} type="button" className="otp-social-btn" onClick={() => handleOAuth(provider)}>
+                {provider.charAt(0).toUpperCase() + provider.slice(1)}
+              </button>
+            ))}
+          </div>
+          <div className="otp-secure" style={{ marginTop: '14px' }}><ShieldCheck size={14} /> Secured by Supabase Auth</div>
+        </div>
+      ) : (
+        <form onSubmit={verifyOtp}>
+          <button type="button" className="otp-back" onClick={() => { setStep('input'); setError(''); }}>
+            <ArrowLeft size={15} /> Change email
+          </button>
+          <span className="otp-icon"><ShieldCheck size={26} /></span>
+          <small>Verification Code</small>
+          <h2 id="otp-title">Check your inbox</h2>
+          <p>Enter the code sent to {email}.</p>
+          <label htmlFor="otp-code">One-time password</label>
+          <input className="otp-code-field" id="otp-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="••••••" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} autoFocus />
+          {error && <p className="otp-error" role="alert">{error}</p>}
+          <button className="otp-primary" disabled={loading || otp.length < 4}>{loading ? 'Verifying…' : 'Verify & Continue'}</button>
+          <button type="button" className="otp-resend" disabled={loading || cooldown > 0} onClick={() => sendOtp()}>
+            {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend Code'}
+          </button>
+        </form>
+      )}
+    </section>
+  );
+
+  if (pageMode) return <main className="auth-page">{dialog}</main>;
+
   return (
     <>
       <button
@@ -351,8 +426,8 @@ function SupabaseOtpLogin({ phone }: { phone?: string }) {
   );
 }
 
-export default function OtpLogin({ phone }: { phone?: string }) {
+export default function OtpLogin({ phone, pageMode = false }: { phone?: string; pageMode?: boolean }) {
   if (!isSupabaseConfigured) return null;
 
-  return <SupabaseOtpLogin phone={phone} />;
+  return <SupabaseOtpLogin phone={phone} pageMode={pageMode} />;
 }

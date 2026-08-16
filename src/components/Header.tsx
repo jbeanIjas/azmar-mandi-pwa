@@ -1,21 +1,15 @@
 "use client";
 
-import { ChevronDown, MapPin, ShoppingBag } from 'lucide-react';
+import { ChevronDown, MapPin, ShoppingBag, UserRound } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React from 'react';
 import { useCart } from '../context/CartContext';
 import { useLocation } from '../context/LocationContext';
-import LocationSelector from './LocationSelector';
-import AddressEditor from './AddressEditor';
-import OtpLogin from './OtpLogin';
 
 export default function Header({ phone }: { phone?: string }) {
   const { locationStatus, isDeliveryAvailable, locationName, locationAddress } = useLocation();
-  const { items, setIsCartOpen } = useCart();
-  const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
-  const [isAddressEditorOpen, setIsAddressEditorOpen] = useState(false);
-  const [locationSearch, setLocationSearch] = useState('');
+  const { items } = useCart();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -25,20 +19,20 @@ export default function Header({ phone }: { phone?: string }) {
           <Image src="/brand/azmar-mark.png" alt="" width={44} height={44} priority />
           <span><strong>AZMAR</strong><small>MANDI</small></span>
         </Link>
-        <button className="location-trigger" onClick={() => setIsLocationSelectorOpen(true)}>
+        <Link className="location-trigger" href="/location">
           <span className="location-icon"><MapPin size={18} /></span>
           <span className="location-copy">
             <small>{locationStatus === 'loading' ? 'Finding your location' : 'Deliver to'}</small>
             <strong>{locationName}<ChevronDown size={14} /></strong>
             <span>{locationAddress}</span>
           </span>
-        </button>
+        </Link>
 
-        <button className="header-cart" onClick={() => setIsCartOpen(true)} aria-label={`Open cart with ${itemCount} items`}>
+        <Link className="header-cart" href="/cart" aria-label={`Open cart with ${itemCount} items`}>
           <ShoppingBag size={20} />
           {itemCount > 0 && <span>{itemCount}</span>}
-        </button>
-        <OtpLogin phone={phone} />
+        </Link>
+        <Link className="profile-avatar" href={phone ? '/account/orders' : '/account/login'} aria-label={phone ? 'Open account' : 'Log in or sign up'}><UserRound size={18} /></Link>
       </header>
 
       {locationStatus === 'success' && (
@@ -46,18 +40,6 @@ export default function Header({ phone }: { phone?: string }) {
           {isDeliveryAvailable ? 'Delivery available in your area' : 'Outside our current delivery area'}
         </div>
       )}
-
-      {isLocationSelectorOpen && (
-        <LocationSelector
-          onClose={() => setIsLocationSelectorOpen(false)}
-          onAddAddress={(searchQuery = '') => {
-            setIsLocationSelectorOpen(false);
-            setLocationSearch(searchQuery);
-            setIsAddressEditorOpen(true);
-          }}
-        />
-      )}
-      {isAddressEditorOpen && <AddressEditor onClose={() => setIsAddressEditorOpen(false)} initialSearch={locationSearch} />}
     </>
   );
 }

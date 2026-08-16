@@ -8,6 +8,7 @@ import { useLocation, RESTAURANT_LAT, RESTAURANT_LNG } from '../context/Location
 interface LocationSelectorProps {
   onClose: () => void;
   onAddAddress: (searchQuery?: string) => void;
+  pageMode?: boolean;
 }
 
 type LocationSuggestion = {
@@ -17,7 +18,7 @@ type LocationSuggestion = {
   displayName: string;
 };
 
-export default function LocationSelector({ onClose, onAddAddress }: LocationSelectorProps) {
+export default function LocationSelector({ onClose, onAddAddress, pageMode = false }: LocationSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'loading' | 'complete'>('idle');
@@ -59,28 +60,29 @@ export default function LocationSelector({ onClose, onAddAddress }: LocationSele
     };
   }, [searchQuery]);
 
-  return createPortal(
+  const content = (
     <div ref={containerRef} style={{
-      position: 'fixed',
+      position: pageMode ? 'relative' : 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0,0,0,0.6)',
+      background: pageMode ? 'var(--bg-darker)' : 'rgba(0,0,0,0.6)',
       zIndex: 1000,
       display: 'flex',
-      alignItems: 'flex-end',
-      backdropFilter: 'blur(4px)'
+      alignItems: pageMode ? 'stretch' : 'flex-end',
+      backdropFilter: pageMode ? undefined : 'blur(4px)'
     }}>
       <div ref={modalRef} style={{
         background: 'var(--bg-dark)',
         width: '100%',
-        height: '90vh',
-        borderTopLeftRadius: '24px',
-        borderTopRightRadius: '24px',
+        minHeight: pageMode ? '100vh' : undefined,
+        height: pageMode ? 'auto' : '90vh',
+        borderTopLeftRadius: pageMode ? 0 : '24px',
+        borderTopRightRadius: pageMode ? 0 : '24px',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 -4px 24px rgba(33,33,33,0.14)',
+        boxShadow: pageMode ? 'none' : '0 -4px 24px rgba(33,33,33,0.14)',
         overflowY: 'auto'
       }}>
       
@@ -272,7 +274,7 @@ export default function LocationSelector({ onClose, onAddAddress }: LocationSele
         </div>
 
       </div>
-    </div>,
-    document.body
+    </div>
   );
+  return pageMode ? content : createPortal(content, document.body);
 }

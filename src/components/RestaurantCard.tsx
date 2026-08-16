@@ -4,8 +4,8 @@ import Image from 'next/image';
 import { Plus, Star } from 'lucide-react';
 import React, { TouchEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { MenuItem } from '@prisma/client';
+import { useRouter } from 'next/navigation';
 import { useCart } from '../context/CartContext';
-import ProductModal from './ProductModal';
 
 const categoryGallery: Record<string, string[]> = {
   signatures: [
@@ -46,7 +46,7 @@ function readGalleryImages(specs: unknown): string[] {
 
 export default function RestaurantCard({ item }: { item: MenuItem }) {
   const { addToCart } = useCart();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideCycle, setSlideCycle] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -58,7 +58,7 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
   ])).slice(0, 3), [item.categoryId, item.image, item.specs]);
 
   useEffect(() => {
-    if (slides.length < 2 || isModalOpen) return;
+    if (slides.length < 2) return;
 
     const timer = window.setTimeout(() => {
       setActiveSlide((current) => (current + 1) % slides.length);
@@ -66,7 +66,7 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
     }, 3_000);
 
     return () => window.clearTimeout(timer);
-  }, [activeSlide, isModalOpen, slideCycle, slides.length]);
+  }, [activeSlide, slideCycle, slides.length]);
 
   const moveSlide = (direction: number) => {
     setActiveSlide((current) => (current + direction + slides.length) % slides.length);
@@ -91,8 +91,7 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
   };
 
   return (
-    <>
-      <article className="product-card" onClick={() => setIsModalOpen(true)}>
+      <article className="product-card" onClick={() => router.push(`/product/${item.id}`)}>
         <div className="product-image" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {slides.map((slide, index) => (
             <Image
@@ -141,7 +140,5 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
           </div>
         </div>
       </article>
-      {isModalOpen && <ProductModal item={item} onClose={() => setIsModalOpen(false)} />}
-    </>
   );
 }

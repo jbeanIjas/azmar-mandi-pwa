@@ -6,6 +6,7 @@ import { CalendarDays, Clock3, Send, Users, X } from "lucide-react";
 type EventBookingProps = {
   isOpen: boolean;
   onClose: () => void;
+  pageMode?: boolean;
 };
 
 type DateOption = { value: string; weekday: string; day: string; month: string };
@@ -67,7 +68,7 @@ const labelStyle: React.CSSProperties = {
   textTransform: 'uppercase',
 };
 
-export default function EventBooking({ isOpen, onClose }: EventBookingProps) {
+export default function EventBooking({ isOpen, onClose, pageMode = false }: EventBookingProps) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [eventType, setEventType] = useState('Wedding Catering');
@@ -81,7 +82,7 @@ export default function EventBooking({ isOpen, onClose }: EventBookingProps) {
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || pageMode) return;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
@@ -132,23 +133,23 @@ export default function EventBooking({ isOpen, onClose }: EventBookingProps) {
 
   return (
     <>
-      <div
+      {!pageMode && <div
         onClick={onClose}
         aria-hidden="true"
         style={{
           position: 'fixed', inset: 0, zIndex: 100, display: isOpen ? 'block' : 'none',
           background: 'rgba(0,0,0,.72)', backdropFilter: 'blur(4px)'
         }}
-      />
+      />}
       <aside
-        role="dialog"
-        aria-modal="true"
+        role={pageMode ? undefined : 'dialog'}
+        aria-modal={pageMode ? undefined : true}
         aria-label="Catering service enquiry"
         style={{
-          position: 'fixed', zIndex: 101, top: 0, right: 0, display: 'flex', flexDirection: 'column',
-          width: '100%', maxWidth: '450px', height: '100dvh', background: '#fff',
-          boxShadow: '-10px 0 30px rgba(33,33,33,.14)',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          position: pageMode ? 'relative' : 'fixed', zIndex: 101, top: 0, right: 0, display: 'flex', flexDirection: 'column',
+          width: '100%', maxWidth: pageMode ? '720px' : '450px', minHeight: '100dvh', height: pageMode ? 'auto' : '100dvh', margin: pageMode ? '0 auto' : undefined, background: '#fff',
+          boxShadow: pageMode ? 'none' : '-10px 0 30px rgba(33,33,33,.14)',
+          transform: pageMode || isOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform .5s cubic-bezier(.16,1,.3,1)'
         }}
       >

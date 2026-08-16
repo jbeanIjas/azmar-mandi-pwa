@@ -13,6 +13,7 @@ import {
 interface AddressEditorProps {
   onClose: () => void;
   initialSearch?: string;
+  pageMode?: boolean;
 }
 
 type SearchResult = {
@@ -22,7 +23,7 @@ type SearchResult = {
   displayName: string;
 };
 
-export default function AddressEditor({ onClose, initialSearch = '' }: AddressEditorProps) {
+export default function AddressEditor({ onClose, initialSearch = '', pageMode = false }: AddressEditorProps) {
   const [mapReady, setMapReady] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -250,8 +251,8 @@ export default function AddressEditor({ onClose, initialSearch = '' }: AddressEd
     onClose();
   };
 
-  return createPortal(
-    <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 1100, display: 'flex', flexDirection: 'column' }}>
+  const content = (
+    <div style={{ position: pageMode ? 'relative' : 'fixed', inset: 0, minHeight: '100vh', background: '#fff', zIndex: 1100, display: 'flex', flexDirection: 'column' }}>
       <div style={{ position: 'relative', flex: '1 1 46%', minHeight: '280px' }}>
         <div ref={mapElementRef} aria-label="Delivery location map" style={{ position: 'absolute', inset: 0, background: '#d8d8d8' }} />
 
@@ -344,7 +345,7 @@ export default function AddressEditor({ onClose, initialSearch = '' }: AddressEd
           Confirm delivery address
         </button>
       </div>
-    </div>,
-    document.body
+    </div>
   );
+  return pageMode ? content : createPortal(content, document.body);
 }

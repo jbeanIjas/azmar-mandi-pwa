@@ -8,7 +8,7 @@ import { useCart } from "../context/CartContext";
 import { MAX_DISTANCE_KM, useLocation } from "../context/LocationContext";
 import AddressEditor from "./AddressEditor";
 
-export default function Cart() {
+export default function Cart({ pageMode = false }: { pageMode?: boolean }) {
   const router = useRouter();
   const {
     items,
@@ -43,12 +43,12 @@ export default function Cart() {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
-    if (isCartOpen) {
+    if (isCartOpen && !pageMode) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-  }, [isCartOpen]);
+  }, [isCartOpen, pageMode]);
 
   const handleVerifyLocation = () => {
     fetchCurrentLocation();
@@ -96,7 +96,7 @@ export default function Cart() {
   return (
     <>
       {/* Floating Cart Button (Desktop) */}
-      <button
+      {!pageMode && <button
         onClick={() => setIsCartOpen(true)}
         style={{
           display: 'none', // We use bottom nav on mobile
@@ -136,10 +136,10 @@ export default function Cart() {
             </span>
           )}
         </div>
-      </button>
+      </button>}
 
       {/* Cart Drawer Backdrop */}
-      <div
+      {!pageMode && <div
         onClick={() => setIsCartOpen(false)}
         style={{
           position: 'fixed',
@@ -152,25 +152,27 @@ export default function Cart() {
           opacity: isCartOpen ? 1 : 0,
           transition: 'opacity 0.3s'
         }}
-      />
+      />}
 
       {/* Cart Drawer */}
       <div
         style={{
-          position: 'fixed',
+          position: pageMode ? 'relative' : 'fixed',
           top: 0,
           right: 0,
           width: '100%',
-          maxWidth: '450px',
-          height: '100vh',
+          maxWidth: pageMode ? '720px' : '450px',
+          minHeight: '100vh',
+          height: pageMode ? 'auto' : '100vh',
+          margin: pageMode ? '0 auto' : undefined,
           backgroundColor: 'var(--bg-dark)',
           zIndex: 100,
           borderLeft: '1px solid var(--border-subtle)',
-          transform: isCartOpen ? 'translateX(0)' : 'translateX(100%)',
+          transform: pageMode || isCartOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '-10px 0 30px rgba(33,33,33,0.14)'
+          boxShadow: pageMode ? 'none' : '-10px 0 30px rgba(33,33,33,0.14)'
         }}
       >
         {/* Header */}
@@ -179,7 +181,7 @@ export default function Cart() {
             YOUR CART
           </h2>
           <button
-            onClick={() => setIsCartOpen(false)}
+            onClick={() => pageMode ? router.back() : setIsCartOpen(false)}
             aria-label="Close cart"
             style={{ background: '#f4f2f2', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'grid', placeItems: 'center', color: '#555', cursor: 'pointer' }}
           >
@@ -332,7 +334,7 @@ export default function Cart() {
               )}
 
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => setIsAddressEditorOpen(true)} style={{ flex: 1, padding: '9px 6px', border: '1px solid var(--accent-red)', background: 'var(--accent-red)', color: '#fff', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', cursor: 'pointer' }}>
+                <button onClick={() => pageMode ? router.push('/address/new') : setIsAddressEditorOpen(true)} style={{ flex: 1, padding: '9px 6px', border: '1px solid var(--accent-red)', background: 'var(--accent-red)', color: '#fff', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', cursor: 'pointer' }}>
                   Choose on map
                 </button>
                 <button onClick={handleVerifyLocation} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '9px 6px', border: '1px solid var(--accent-red)', background: '#fff', color: 'var(--accent-red)', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', cursor: 'pointer' }}>
@@ -402,7 +404,7 @@ export default function Cart() {
           </button>
         </div>}
       </div>
-      {isAddressEditorOpen && <AddressEditor onClose={() => setIsAddressEditorOpen(false)} />}
+      {!pageMode && isAddressEditorOpen && <AddressEditor onClose={() => setIsAddressEditorOpen(false)} />}
     </>
   );
 }

@@ -12,9 +12,10 @@ import { useCart } from '../context/CartContext';
 interface ProductModalProps {
   item: MenuItem;
   onClose: () => void;
+  pageMode?: boolean;
 }
 
-export default function ProductModal({ item, onClose }: ProductModalProps) {
+export default function ProductModal({ item, onClose, pageMode = false }: ProductModalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
@@ -23,6 +24,7 @@ export default function ProductModal({ item, onClose }: ProductModalProps) {
   const [selectedOption, setSelectedOption] = useState('full');
 
   useGSAP(() => {
+    if (pageMode) return;
     gsap.from(containerRef.current, {
       opacity: 0,
       duration: 0.3,
@@ -36,6 +38,10 @@ export default function ProductModal({ item, onClose }: ProductModalProps) {
   }, { scope: containerRef });
 
   const handleClose = () => {
+    if (pageMode) {
+      onClose();
+      return;
+    }
     gsap.to(containerRef.current, {
       opacity: 0,
       duration: 0.3,
@@ -59,15 +65,15 @@ export default function ProductModal({ item, onClose }: ProductModalProps) {
   
   const totalPrice = Math.round(optionPrice * quantity);
 
-  return createPortal(
+  const content = (
     <div ref={containerRef} style={{
-      position: 'fixed',
+      position: pageMode ? 'relative' : 'fixed',
       top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0,0,0,0.7)',
-      backdropFilter: 'blur(4px)',
+      background: pageMode ? 'var(--bg-darker)' : 'rgba(0,0,0,0.7)',
+      backdropFilter: pageMode ? undefined : 'blur(4px)',
       zIndex: 2000,
       display: 'flex',
-      alignItems: 'flex-end',
+      alignItems: pageMode ? 'stretch' : 'flex-end',
       justifyContent: 'center'
     }}>
       
@@ -75,10 +81,9 @@ export default function ProductModal({ item, onClose }: ProductModalProps) {
       <button 
         onClick={handleClose}
         style={{
-          position: 'absolute',
-          top: '32px',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          position: 'fixed',
+          top: 'calc(16px + env(safe-area-inset-top))',
+          left: '16px',
           width: '48px',
           height: '48px',
           borderRadius: '50%',
@@ -98,12 +103,13 @@ export default function ProductModal({ item, onClose }: ProductModalProps) {
       <div ref={modalRef} style={{
         background: 'var(--bg-dark)',
         width: '100%',
-        height: '85vh',
-        borderTopLeftRadius: '24px',
-        borderTopRightRadius: '24px',
+        minHeight: pageMode ? '100vh' : undefined,
+        height: pageMode ? 'auto' : '85vh',
+        borderTopLeftRadius: pageMode ? 0 : '24px',
+        borderTopRightRadius: pageMode ? 0 : '24px',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 -10px 40px rgba(33,33,33,0.16)',
+        boxShadow: pageMode ? 'none' : '0 -10px 40px rgba(33,33,33,0.16)',
         overflow: 'hidden',
         position: 'relative'
       }}>
@@ -265,7 +271,7 @@ export default function ProductModal({ item, onClose }: ProductModalProps) {
           
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
+  return pageMode ? content : createPortal(content, document.body);
 }

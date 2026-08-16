@@ -5,7 +5,6 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { CartProvider } from "../context/CartContext";
 import { LocationProvider } from "../context/LocationContext";
-import Cart from "../components/Cart";
 import BottomNav from "../components/BottomNav";
 
 const playfair = Playfair_Display({ 
@@ -82,7 +81,6 @@ export default function RootLayout({
           <CartProvider>
             {children}
             <BottomNav />
-            <Cart />
           </CartProvider>
         </LocationProvider>
       </body>

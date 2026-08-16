@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Home, Layers3, CalendarDays, ShoppingBag, ReceiptText } from "lucide-react";
 import React from 'react';
 import { useCart } from "../context/CartContext";
-import EventBooking from "./EventBooking";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import ScrollToPlugin from "gsap/ScrollToPlugin";
@@ -13,8 +12,7 @@ gsap.registerPlugin(ScrollToPlugin);
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { items, setIsCartOpen } = useCart();
-  const [isEventBookingOpen, setIsEventBookingOpen] = React.useState(false);
+  const { items } = useCart();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   if (pathname.startsWith('/admin')) return null;
@@ -47,28 +45,7 @@ export default function BottomNav() {
     }
   };
 
-  const handleCartClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const iconContainer = e.currentTarget.querySelector('.nav-icon');
-    if (iconContainer) {
-      gsap.fromTo(iconContainer, 
-        { scale: 0.8, y: -5 }, 
-        { scale: 1, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" }
-      );
-    }
-    setIsCartOpen(true);
-  };
-
-  const handleEventBookingClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const iconContainer = e.currentTarget.querySelector('.nav-icon');
-    if (iconContainer) {
-      gsap.fromTo(iconContainer, { scale: 0.8 }, { scale: 1, duration: 0.4, ease: "back.out(2)" });
-    }
-    setIsCartOpen(false);
-    setIsEventBookingOpen(true);
-  };
-
   return (
-    <>
       <div style={{
       position: 'fixed',
       bottom: 0,
@@ -112,9 +89,8 @@ export default function BottomNav() {
           );
         })}
 
-        <button
-          type="button"
-          onClick={handleEventBookingClick}
+        <Link
+          href="/catering"
           style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             gap: '4px', minWidth: '44px', flex: '0 0 auto', padding: 0, color: '#929292', background: 'none', border: 'none', cursor: 'pointer'
@@ -124,11 +100,11 @@ export default function BottomNav() {
           <span style={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Catering
           </span>
-        </button>
+        </Link>
         
         {/* Cart Button */}
-        <button
-          onClick={handleCartClick}
+        <Link
+          href="/cart"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -170,10 +146,8 @@ export default function BottomNav() {
           <span style={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Cart
           </span>
-        </button>
+        </Link>
       </div>
       </div>
-      <EventBooking isOpen={isEventBookingOpen} onClose={() => setIsEventBookingOpen(false)} />
-    </>
   );
 }
