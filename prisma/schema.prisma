@@ -36,8 +36,12 @@ model Order {
   customerEmail   String?
   customerPhone   String?
   status          String      @default("PLACED")
+  paymentStatus   String      @default("PENDING")
+  paymentMethod   String      @default("CASHFREE")
+  paymentSessionId String?
+  cfOrderId       String?
+  cfPaymentId     String?
   orderType       String
-  paymentMethod   String
   deliveryName    String?
   deliveryAddress String?
   deliveryLat     Float?

@@ -1,11 +1,12 @@
 import prisma from '../../../lib/prisma';
 import { getCustomerIdentity } from '../../../lib/customerAuth';
 import { notifyNewOrder } from '../../../lib/orderNotifications';
+import { createCashfreeOrder } from '../../../lib/cashfree';
 
 type CheckoutBody = {
   items?: Array<{ productId?: string; quantity?: number }>;
   orderType?: 'delivery' | 'pickup';
-  paymentMethod?: 'cod' | 'upi';
+  paymentMethod?: 'cashfree' | 'online' | 'cod' | 'upi';
   customerPhone?: string;
   delivery?: { name?: string; address?: string; lat?: number; lng?: number };
 };
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
 
   if (!quantities.size) return Response.json({ error: 'Your cart is empty.' }, { status: 400 });
   if (!['delivery', 'pickup'].includes(body?.orderType || '')) return Response.json({ error: 'Choose delivery or pickup.' }, { status: 400 });
-  if (!['cod', 'upi'].includes(body?.paymentMethod || '')) return Response.json({ error: 'Choose a payment method.' }, { status: 400 });
+  
   const customerPhone = body?.customerPhone?.replace(/\D/g, '').slice(-10) || '';
   if (customerPhone.length !== 10) return Response.json({ error: 'Enter a valid 10-digit WhatsApp number.' }, { status: 400 });
   if (body?.orderType === 'delivery' && (!body.delivery?.address || typeof body.delivery.lat !== 'number' || typeof body.delivery.lng !== 'number')) {
@@ -61,6 +62,27 @@ export async function POST(request: Request) {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const orderNumber = `AZM-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
 
+  const paymentMethod = body?.paymentMethod || 'cashfree';
+
+  let paymentSessionId: string | null = null;
+  let cfOrderId: string | null = null;
+
+  // Create Cashfree Payment session
+  try {
+    const cfOrder = await createCashfreeOrder({
+      orderId: orderNumber,
+      amount: total,
+      customerId: customer.id,
+      customerPhone: customerPhone,
+      customerEmail: customer.email || undefined,
+    });
+    paymentSessionId = cfOrder.payment_session_id;
+    cfOrderId = String(cfOrder.cf_order_id);
+  } catch (error: any) {
+    console.error('Failed to initialize Cashfree session:', error);
+    return Response.json({ error: error.message || 'Could not initiate online payment. Please try again.' }, { status: 500 });
+  }
+
   const order = await prisma.order.create({
     data: {
       orderNumber,
@@ -68,7 +90,10 @@ export async function POST(request: Request) {
       customerEmail: customer.email,
       customerPhone: `+91${customerPhone}`,
       orderType: body!.orderType!,
-      paymentMethod: body!.paymentMethod!,
+      paymentMethod,
+      paymentStatus: 'PENDING',
+      paymentSessionId,
+      cfOrderId,
       deliveryName: body?.orderType === 'delivery' ? body.delivery?.name : null,
       deliveryAddress: body?.orderType === 'delivery' ? body.delivery?.address : null,
       deliveryLat: body?.orderType === 'delivery' ? body.delivery?.lat : null,
@@ -80,5 +105,5 @@ export async function POST(request: Request) {
   });
 
   await notifyNewOrder(order).catch((error) => console.error('Order notification failed:', error));
-  return Response.json(order, { status: 201 });
+  return Response.json({ ...order, paymentSessionId }, { status: 201 });
 }
