@@ -252,7 +252,7 @@ export default function AddressEditor({ onClose, initialSearch = '', pageMode = 
   };
 
   const content = (
-    <div style={{ position: pageMode ? 'relative' : 'fixed', inset: 0, minHeight: '100vh', background: '#fff', zIndex: 1100, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: pageMode ? 'relative' : 'fixed', inset: 0, minHeight: '100dvh', background: '#fff', zIndex: 1100, display: 'flex', flexDirection: 'column' }}>
       <div style={{ position: 'relative', flex: '1 1 46%', minHeight: '280px' }}>
         <div ref={mapElementRef} aria-label="Delivery location map" style={{ position: 'absolute', inset: 0, background: '#d8d8d8' }} />
 
@@ -318,7 +318,7 @@ export default function AddressEditor({ onClose, initialSearch = '', pageMode = 
         </button>
       </div>
 
-      <div style={{ flex: '0 1 auto', maxHeight: '54vh', overflowY: 'auto', padding: '20px', borderRadius: '22px 22px 0 0', background: '#fff', boxShadow: '0 -6px 22px rgba(33,33,33,.12)', zIndex: 600 }}>
+      <div style={{ flex: '0 1 auto', maxHeight: '54vh', overflowY: 'auto', padding: pageMode ? '20px 20px calc(104px + env(safe-area-inset-bottom))' : '20px', boxSizing: 'border-box', borderRadius: '22px 22px 0 0', background: '#fff', boxShadow: '0 -6px 22px rgba(33,33,33,.12)', zIndex: 600 }}>
         <div style={{ width: '42px', height: '4px', borderRadius: '4px', background: '#ddd', margin: '0 auto 16px' }} />
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '14px' }}>
           <div style={{ width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0, background: 'rgba(var(--accent-red-rgb),.14)', display: 'grid', placeItems: 'center' }}>
