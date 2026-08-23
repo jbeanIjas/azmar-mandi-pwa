@@ -2,8 +2,9 @@
 
 import React, { useEffect } from "react";
 import Image from "next/image";
-import { ShoppingBag, X, Plus, Minus, CheckCircle2, MapPin, Navigation, Banknote, Smartphone } from "lucide-react";
+import { ShoppingBag, X, Plus, Minus, CheckCircle2, MapPin, Navigation, Smartphone, CreditCard, ShieldCheck, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { load } from "@cashfreepayments/cashfree-js";
 import { useCart } from "../context/CartContext";
 import { MAX_DISTANCE_KM, useLocation } from "../context/LocationContext";
 import AddressEditor from "./AddressEditor";
@@ -21,7 +22,7 @@ export default function Cart({ pageMode = false }: { pageMode?: boolean }) {
   } = useCart();
   
   const [orderType, setOrderType] = React.useState<'delivery' | 'pickup'>('pickup');
-  const [paymentMethod, setPaymentMethod] = React.useState<'cod' | 'upi'>('cod');
+  const [paymentMethod] = React.useState<'cashfree'>('cashfree');
   const [isAddressEditorOpen, setIsAddressEditorOpen] = React.useState(false);
   const [checkoutLoading, setCheckoutLoading] = React.useState(false);
   const [checkoutError, setCheckoutError] = React.useState('');
@@ -71,7 +72,7 @@ export default function Cart({ pageMode = false }: { pageMode?: boolean }) {
         body: JSON.stringify({
           items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
           orderType,
-          paymentMethod,
+          paymentMethod: 'cashfree',
           customerPhone: whatsappPhone,
           delivery: orderType === 'delivery' ? { name: locationName, address: locationAddress, lat: locationLat, lng: locationLng } : undefined,
         }),
@@ -82,10 +83,26 @@ export default function Cart({ pageMode = false }: { pageMode?: boolean }) {
         if (response.status === 401) window.dispatchEvent(new Event('azmar:open-login'));
         return;
       }
+
       clearCart();
-      setCompletedOrder(result.orderNumber);
-      setIsCartOpen(false);
-      router.push(`/order-success?number=${encodeURIComponent(result.orderNumber)}`);
+
+      if (result.paymentSessionId) {
+        try {
+          const cashfreeEnv = process.env.NEXT_PUBLIC_CASHFREE_ENV === 'PRODUCTION' ? 'production' : 'sandbox';
+          const cashfree = await load({ mode: cashfreeEnv });
+          await cashfree.checkout({
+            paymentSessionId: result.paymentSessionId,
+            redirectTarget: '_self',
+          });
+        } catch (sdkError: any) {
+          console.error('Cashfree checkout SDK error:', sdkError);
+          router.push(`/order-success?number=${encodeURIComponent(result.orderNumber)}`);
+        }
+      } else {
+        setCompletedOrder(result.orderNumber);
+        setIsCartOpen(false);
+        router.push(`/order-success?number=${encodeURIComponent(result.orderNumber)}`);
+      }
     } catch {
       setCheckoutError('Could not connect to the restaurant. Please try again.');
     } finally {
@@ -344,29 +361,20 @@ export default function Cart({ pageMode = false }: { pageMode?: boolean }) {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-            <button
-              onClick={() => setPaymentMethod('cod')}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 0', cursor: 'pointer', transition: 'all 0.2s',
-                backgroundColor: paymentMethod === 'cod' ? 'rgba(189,29,75,0.1)' : 'transparent',
-                border: paymentMethod === 'cod' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
-                color: paymentMethod === 'cod' ? 'var(--accent-red)' : '#777'
-              }}
-            >
-              <Banknote size={16} />
-              <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cash on Delivery</span>
-            </button>
-            <button
-              onClick={() => setPaymentMethod('upi')}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 0', cursor: 'pointer', transition: 'all 0.2s',
-                backgroundColor: paymentMethod === 'upi' ? 'rgba(189,29,75,0.1)' : 'transparent',
-                border: paymentMethod === 'upi' ? '1px solid var(--accent-red)' : '1px solid rgba(189,29,75,0.2)',
-                color: paymentMethod === 'upi' ? 'var(--accent-red)' : '#777'
-              }}
-            >
-              <Smartphone size={16} />
-              <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>UPI</span>
-            </button>
+          <div style={{ marginBottom: '20px', padding: '14px', border: '1px solid rgba(189,29,75,0.25)', borderRadius: '12px', backgroundColor: '#fff5f7', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CreditCard size={18} color="var(--accent-red)" />
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#212121' }}>Cashfree Payment Gateway</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(189,29,75,0.1)', padding: '3px 8px', borderRadius: '20px' }}>
+                <ShieldCheck size={12} color="var(--accent-red)" />
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--accent-red)', textTransform: 'uppercase' }}>100% Secure</span>
+              </div>
+            </div>
+            <p style={{ margin: 0, fontSize: '11px', color: '#666', lineHeight: 1.4 }}>
+              Pay via <strong>UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, Net Banking & Wallets</strong>.
+            </p>
           </div>
 
           <label style={{ display: 'block', marginBottom: '18px', color: '#555', fontSize: '10px', fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase' }}>
@@ -394,12 +402,14 @@ export default function Cart({ pageMode = false }: { pageMode?: boolean }) {
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
               border: 'none',
+              borderRadius: '12px',
               cursor: (items.length === 0 || (orderType === 'delivery' && !deliveryReady)) ? 'not-allowed' : 'pointer',
               background: (items.length === 0 || (orderType === 'delivery' && !deliveryReady)) ? '#374151' : 'var(--accent-red)',
               color: (items.length === 0 || (orderType === 'delivery' && !deliveryReady)) ? '#6b7280' : '#fff',
             }}
           >
-            <span>{checkoutLoading ? 'Placing order…' : 'Place order'}</span>
+            <Lock size={16} />
+            <span>{checkoutLoading ? 'Redirecting to Cashfree…' : 'Proceed to Pay & Place Order'}</span>
             <CheckCircle2 size={16} />
           </button>
         </div>}
