@@ -29,7 +29,47 @@ export default function Cart({ pageMode = false }: { pageMode?: boolean }) {
   const [completedOrder, setCompletedOrder] = React.useState('');
   const [whatsappPhone, setWhatsappPhone] = React.useState('');
   const [whatsappError, setWhatsappError] = React.useState('');
+  const [isPhoneLoggedIn, setIsPhoneLoggedIn] = React.useState(false);
   const whatsappInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Sync phone from active login session
+  useEffect(() => {
+    const syncPhone = (phone?: string | null) => {
+      if (phone && phone.length === 10) {
+        setWhatsappPhone(phone);
+        setIsPhoneLoggedIn(true);
+        setWhatsappError('');
+      } else {
+        setIsPhoneLoggedIn(false);
+      }
+    };
+
+    // 1. Try LocalStorage for instant sync
+    const cached = typeof window !== 'undefined' ? localStorage.getItem('azmar_phone_number') : null;
+    if (cached) {
+      syncPhone(cached);
+    }
+
+    // 2. Fetch server session
+    fetch('/api/otp/session')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.authenticated && data.phone) {
+          syncPhone(data.phone);
+          if (typeof window !== 'undefined') localStorage.setItem('azmar_phone_number', data.phone);
+        }
+      })
+      .catch(() => {});
+
+    // 3. Listen to live login/logout events across the app
+    const handlePhoneSession = (e: Event) => {
+      const customEvent = e as CustomEvent<{ phone: string | null }>;
+      syncPhone(customEvent.detail?.phone);
+    };
+
+    window.addEventListener('azmar:phone-session', handlePhoneSession);
+    return () => window.removeEventListener('azmar:phone-session', handlePhoneSession);
+  }, []);
   const {
     fetchCurrentLocation,
     isDeliveryAvailable,
@@ -378,10 +418,17 @@ export default function Cart({ pageMode = false }: { pageMode?: boolean }) {
           </div>
 
           <label style={{ display: 'block', marginBottom: '18px', color: '#555', fontSize: '10px', fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-            WhatsApp number for order updates
-            <div style={{ display: 'flex', marginTop: '7px', alignItems: 'center', overflow: 'hidden', border: '1px solid rgba(189,29,75,0.22)', borderRadius: '10px', background: '#fafafa' }}>
-              <span style={{ padding: '0 0 0 12px', color: '#777', fontSize: '13px' }}>+91</span>
-              <input ref={whatsappInputRef} aria-label="WhatsApp number" aria-invalid={Boolean(whatsappError)} aria-describedby={whatsappError ? 'whatsapp-number-error' : undefined} inputMode="tel" autoComplete="tel" value={whatsappPhone} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 10); setWhatsappPhone(value); if (value.length === 10) setWhatsappError(''); }} placeholder="10-digit mobile number" style={{ width: '100%', padding: '12px 10px', border: 0, outline: 0, background: 'transparent', color: '#212121', fontSize: '13px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span>WhatsApp number for order updates</span>
+              {isPhoneLoggedIn && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#10b981', fontSize: '10px', fontWeight: 700, textTransform: 'none' }}>
+                  <CheckCircle2 size={12} /> Logged In
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', marginTop: '4px', alignItems: 'center', overflow: 'hidden', border: isPhoneLoggedIn ? '1.5px solid #10b981' : '1px solid rgba(189,29,75,0.22)', borderRadius: '10px', background: isPhoneLoggedIn ? '#f0fdf4' : '#fafafa' }}>
+              <span style={{ padding: '0 0 0 12px', color: isPhoneLoggedIn ? '#059669' : '#777', fontSize: '13px', fontWeight: 600 }}>+91</span>
+              <input ref={whatsappInputRef} aria-label="WhatsApp number" aria-invalid={Boolean(whatsappError)} aria-describedby={whatsappError ? 'whatsapp-number-error' : undefined} inputMode="tel" autoComplete="tel" value={whatsappPhone} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 10); setWhatsappPhone(value); if (value.length === 10) setWhatsappError(''); }} placeholder="10-digit mobile number" style={{ width: '100%', padding: '12px 10px', border: 0, outline: 0, background: 'transparent', color: '#212121', fontSize: '13px', fontWeight: isPhoneLoggedIn ? '600' : 'normal' }} />
             </div>
             {whatsappError && <span id="whatsapp-number-error" role="alert" style={{ display: 'block', marginTop: '7px', color: '#b33535', fontSize: '10px', fontWeight: 700, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' }}>{whatsappError}</span>}
           </label>

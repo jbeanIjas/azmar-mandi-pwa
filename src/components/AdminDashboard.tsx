@@ -138,7 +138,56 @@ export default function AdminDashboard({ initialCategories, initialProducts, ini
       <section className="admin-workspace">
         <div className="admin-toolbar"><div className="admin-tabs"><button className={tab === 'orders' ? 'active' : ''} onClick={() => setTab('orders')}>Orders</button><button className={tab === 'products' ? 'active' : ''} onClick={() => setTab('products')}>Products</button><button className={tab === 'collections' ? 'active' : ''} onClick={() => setTab('collections')}>Collections</button></div><label className="admin-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${tab}…`} /></label>{tab !== 'orders' && <button className="admin-primary" onClick={() => tab === 'products' ? openProduct() : (setEditingId(null), setCategoryDraft(emptyCategory))}><Plus size={17} /> Add {tab === 'products' ? 'product' : 'collection'}</button>}</div>
         {message && <p className="admin-success">{message}</p>}{error && <p className="admin-error">{error}</p>}
-        {tab === 'orders' ? <div className="admin-order-list">{visibleOrders.map((order) => <article className="admin-order" key={order.id}><div className="admin-order-head"><div><span>{new Date(order.createdAt).toLocaleString()}</span><h2>{order.orderNumber} {order.paymentStatus && <small style={{ marginLeft: '8px', padding: '2px 7px', borderRadius: '4px', background: order.paymentStatus === 'PAID' ? '#dcfce7' : '#fee2e2', color: order.paymentStatus === 'PAID' ? '#15803d' : '#b91c1c', fontSize: '10px', fontWeight: 800 }}>{order.paymentStatus}</small>}</h2><p>{order.customerEmail || order.customerPhone || 'Customer'} · {order.orderType} · {order.paymentMethod}</p></div><strong>₹{order.total}</strong></div><div className="admin-order-items">{order.items.map((item) => <span key={item.id}>{item.quantity} × {item.name}</span>)}</div>{order.deliveryAddress && <p className="admin-order-address">{order.deliveryAddress}</p>}<div className="admin-order-actions">{order.customerPhone && <a href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello, this is Azmar Mandi regarding order ${order.orderNumber}.`)}`} target="_blank" rel="noreferrer">Open WhatsApp</a>}<label className="admin-order-status">Status<select value={order.status} disabled={saving} onChange={(event) => updateOrderStatus(order, event.target.value)}><option value="PLACED">Placed</option><option value="CONFIRMED">Confirmed</option><option value="PREPARING">Preparing</option><option value="READY">Ready</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option></select></label></div></article>)}</div> : tab === 'products' ? <div className="admin-product-grid">{visibleProducts.map((product) => <article className="admin-product" key={product.id}><div className="admin-product-image"><Image src={product.image} alt="" fill sizes="180px" /></div><div className="admin-product-copy"><span>{categories.find((category) => category.id === product.categoryId)?.name ?? product.categoryId}</span><h2>{product.name}</h2><p>{product.description}</p><strong>{product.price}</strong></div><div className="admin-card-actions"><button aria-label={`Edit ${product.name}`} onClick={() => openProduct(product)}><Pencil size={15} /></button><button className="danger" aria-label={`Delete ${product.name}`} onClick={() => removeProduct(product)}><Trash2 size={15} /></button></div></article>)}</div> : <div className="admin-collection-grid">{visibleCategories.map((category) => <article className="admin-collection" key={category.id}><div className="admin-collection-image"><Image src={category.image} alt="" fill sizes="120px" /></div><div><span>{category.id}</span><h2>{category.name}</h2><p>{category._count.items} products</p></div><div className="admin-card-actions"><button aria-label={`Edit ${category.name}`} onClick={() => { setEditingId(category.id); setCategoryDraft({ id: category.id, name: category.name, image: category.image }); }}><Pencil size={15} /></button><button className="danger" aria-label={`Delete ${category.name}`} onClick={() => removeCategory(category)}><Trash2 size={15} /></button></div></article>)}</div>}
+        {tab === 'orders' ? <div className="admin-order-list">{visibleOrders.map((order) => {
+          const isTerminal = order.status === 'COMPLETED' || order.status === 'CANCELLED';
+          const canCancel = order.status === 'PLACED' || order.status === 'PENDING';
+          const flowIndex = ['PLACED', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED'].indexOf(order.status);
+
+          return (
+            <article className="admin-order" key={order.id}>
+              <div className="admin-order-head">
+                <div>
+                  <span>{new Date(order.createdAt).toLocaleString()}</span>
+                  <h2>
+                    {order.orderNumber}
+                    {order.paymentStatus && (
+                      <small style={{ marginLeft: '8px', padding: '2px 7px', borderRadius: '4px', background: order.paymentStatus === 'PAID' ? '#dcfce7' : '#fee2e2', color: order.paymentStatus === 'PAID' ? '#15803d' : '#b91c1c', fontSize: '10px', fontWeight: 800 }}>
+                        {order.paymentStatus}
+                      </small>
+                    )}
+                  </h2>
+                  <p>{order.customerEmail || order.customerPhone || 'Customer'} · {order.orderType} · {order.paymentMethod}</p>
+                </div>
+                <strong>₹{order.total}</strong>
+              </div>
+              <div className="admin-order-items">{order.items.map((item) => <span key={item.id}>{item.quantity} × {item.name}</span>)}</div>
+              {order.deliveryAddress && <p className="admin-order-address">{order.deliveryAddress}</p>}
+              <div className="admin-order-actions">
+                {order.customerPhone && <a href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello, this is Azmar Mandi regarding order ${order.orderNumber}.`)}`} target="_blank" rel="noreferrer">Open WhatsApp</a>}
+                <label className="admin-order-status">
+                  Status
+                  <select
+                    value={order.status}
+                    disabled={saving || isTerminal}
+                    onChange={(event) => updateOrderStatus(order, event.target.value)}
+                    style={{
+                      cursor: isTerminal ? 'not-allowed' : 'pointer',
+                      borderColor: order.status === 'COMPLETED' ? '#16a34a' : (order.status === 'CANCELLED' ? '#dc2626' : undefined),
+                      fontWeight: 700,
+                    }}
+                  >
+                    <option value="PLACED" disabled={flowIndex >= 0}>Placed {flowIndex === 0 ? '✓' : ''}</option>
+                    <option value="CONFIRMED" disabled={flowIndex >= 1}>Confirmed {flowIndex === 1 ? '✓' : ''}</option>
+                    <option value="PREPARING" disabled={flowIndex >= 2}>Preparing {flowIndex === 2 ? '✓' : ''}</option>
+                    <option value="READY" disabled={flowIndex >= 3}>Ready {flowIndex === 3 ? '✓' : ''}</option>
+                    <option value="COMPLETED" disabled={flowIndex >= 4}>Completed {flowIndex === 4 ? '✓' : ''}</option>
+                    <option value="CANCELLED" disabled={!canCancel}>Cancelled {order.status === 'CANCELLED' ? '✓' : ''}</option>
+                  </select>
+                </label>
+              </div>
+            </article>
+          );
+        })}</div> : tab === 'products' ? <div className="admin-product-grid">{visibleProducts.map((product) => <article className="admin-product" key={product.id}><div className="admin-product-image"><Image src={product.image} alt="" fill sizes="180px" /></div><div className="admin-product-copy"><span>{categories.find((category) => category.id === product.categoryId)?.name ?? product.categoryId}</span><h2>{product.name}</h2><p>{product.description}</p><strong>{product.price}</strong></div><div className="admin-card-actions"><button aria-label={`Edit ${product.name}`} onClick={() => openProduct(product)}><Pencil size={15} /></button><button className="danger" aria-label={`Delete ${product.name}`} onClick={() => removeProduct(product)}><Trash2 size={15} /></button></div></article>)}</div> : <div className="admin-collection-grid">{visibleCategories.map((category) => <article className="admin-collection" key={category.id}><div className="admin-collection-image"><Image src={category.image} alt="" fill sizes="120px" /></div><div><span>{category.id}</span><h2>{category.name}</h2><p>{category._count.items} products</p></div><div className="admin-card-actions"><button aria-label={`Edit ${category.name}`} onClick={() => { setEditingId(category.id); setCategoryDraft({ id: category.id, name: category.name, image: category.image }); }}><Pencil size={15} /></button><button className="danger" aria-label={`Delete ${category.name}`} onClick={() => removeCategory(category)}><Trash2 size={15} /></button></div></article>)}</div>}
         {(tab === 'orders' ? visibleOrders.length : tab === 'products' ? visibleProducts.length : visibleCategories.length) === 0 && <div className="admin-empty">No matching {tab} found.</div>}
       </section>
 

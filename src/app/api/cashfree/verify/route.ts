@@ -34,16 +34,23 @@ export async function POST(request: NextRequest) {
     const successfulPayment = payments.find((p: { payment_status: string }) => p.payment_status === 'SUCCESS');
     const paymentStatus = isPaid ? 'PAID' : (cfOrder.order_status === 'EXPIRED' ? 'FAILED' : dbOrder.paymentStatus);
 
+    const wasPending = dbOrder.status === 'PENDING';
     const updatedOrder = await prisma.order.update({
       where: { id: dbOrder.id },
       data: {
         paymentStatus,
         cfOrderId: String(cfOrder.cf_order_id || dbOrder.cfOrderId || ''),
         cfPaymentId: successfulPayment?.cf_payment_id ? String(successfulPayment.cf_payment_id) : dbOrder.cfPaymentId,
-        status: isPaid && dbOrder.status === 'PENDING' ? 'PLACED' : dbOrder.status,
+        status: isPaid && wasPending ? 'PLACED' : dbOrder.status,
       },
       include: { items: true }
     });
+
+    if (isPaid && wasPending) {
+      import('../../../../lib/orderNotifications').then(({ notifyNewOrder }) => {
+        notifyNewOrder(updatedOrder).catch(console.error);
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -104,6 +104,10 @@ export async function POST(request: Request) {
     include: { items: true },
   });
 
-  await notifyNewOrder(order).catch((error) => console.error('Order notification failed:', error));
+  // Only send notification immediately for non-online / COD orders. Online Cashfree orders notify upon payment confirmation.
+  if (paymentMethod !== 'cashfree') {
+    await notifyNewOrder(order).catch((error) => console.error('Order notification failed:', error));
+  }
+
   return Response.json({ ...order, paymentSessionId }, { status: 201 });
 }

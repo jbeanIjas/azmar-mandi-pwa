@@ -25,15 +25,25 @@ export async function POST(request: NextRequest) {
     const orderNumber = orderData.order_id;
 
     if (eventType === 'PAYMENT_SUCCESS_WEBHOOK') {
-      await prisma.order.updateMany({
-        where: { orderNumber },
-        data: {
-          paymentStatus: 'PAID',
-          cfOrderId: String(orderData.cf_order_id || ''),
-          cfPaymentId: String(paymentData?.cf_payment_id || ''),
-          status: 'PLACED',
-        },
-      });
+      const existing = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true } });
+      if (existing) {
+        const updated = await prisma.order.update({
+          where: { orderNumber },
+          data: {
+            paymentStatus: 'PAID',
+            cfOrderId: String(orderData.cf_order_id || ''),
+            cfPaymentId: String(paymentData?.cf_payment_id || ''),
+            status: 'PLACED',
+          },
+          include: { items: true },
+        });
+
+        if (existing.status === 'PENDING') {
+          import('../../../../lib/orderNotifications').then(({ notifyNewOrder }) => {
+            notifyNewOrder(updated).catch(console.error);
+          });
+        }
+      }
     } else if (eventType === 'PAYMENT_FAILED_WEBHOOK') {
       await prisma.order.updateMany({
         where: { orderNumber },

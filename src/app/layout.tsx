@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import { CartProvider } from "../context/CartContext";
 import { LocationProvider } from "../context/LocationContext";
 import BottomNav from "../components/BottomNav";
+import OtpLogin from "../components/OtpLogin";
 
 const playfair = Playfair_Display({ 
   subsets: ["latin"],
@@ -52,8 +53,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${poppins.variable} ${playfair.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${poppins.variable} ${playfair.variable}`} suppressHydrationWarning>
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
@@ -81,6 +82,7 @@ export default function RootLayout({
           <CartProvider>
             {children}
             <BottomNav />
+            <OtpLogin />
           </CartProvider>
         </LocationProvider>
       </body>
