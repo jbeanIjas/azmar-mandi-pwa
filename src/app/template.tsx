@@ -1,11 +1,17 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const container = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!window.location.hash) {
+      window.scrollTo(0, 0);
+    }
+  }, []);
 
   useGSAP(() => {
     gsap.from(container.current, {
