@@ -9,10 +9,9 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   useGSAP(() => {
     gsap.from(container.current, {
-      y: 20,
       opacity: 0,
-      duration: 0.4,
-      ease: "power3.out",
+      duration: 0.25,
+      ease: "power2.out",
     });
   }, { scope: container });
 
