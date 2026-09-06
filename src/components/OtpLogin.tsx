@@ -21,7 +21,15 @@ function WhatsAppIcon({ size = 26 }: { size?: number }) {
   );
 }
 
-export default function OtpLogin({ phone: initialPhone, pageMode = false }: { phone?: string; pageMode?: boolean }) {
+export default function OtpLogin({
+  phone: initialPhone,
+  pageMode = false,
+  showTrigger = true,
+}: {
+  phone?: string;
+  pageMode?: boolean;
+  showTrigger?: boolean;
+}) {
   const router = useRouter();
   const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
@@ -117,7 +125,8 @@ export default function OtpLogin({ phone: initialPhone, pageMode = false }: { ph
       setOtp('');
       router.refresh();
       if (pageMode) {
-        router.push('/account/orders');
+        const nextPath = new URLSearchParams(window.location.search).get('next');
+        router.push(nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/account/orders');
       }
     } catch {
       setError('Unable to verify OTP. Please try again.');
@@ -282,14 +291,16 @@ export default function OtpLogin({ phone: initialPhone, pageMode = false }: { ph
 
   return (
     <>
-      <button
-        type="button"
-        className="profile-avatar"
-        aria-label={activePhone ? `Account ${maskedPhone(activePhone)}` : 'Log in with WhatsApp'}
-        onClick={() => setOpen(true)}
-      >
-        {activePhone ? <CheckCircle2 size={18} /> : <UserRound size={18} />}
-      </button>
+      {showTrigger && (
+        <button
+          type="button"
+          className="profile-avatar"
+          aria-label={activePhone ? `Account ${maskedPhone(activePhone)}` : 'Log in with WhatsApp'}
+          onClick={() => setOpen(true)}
+        >
+          {activePhone ? <CheckCircle2 size={18} /> : <UserRound size={18} />}
+        </button>
+      )}
 
       {mounted && open && createPortal(
         <div

@@ -8,6 +8,7 @@ import { LocationProvider } from "../context/LocationContext";
 import BottomNav from "../components/BottomNav";
 import OtpLogin from "../components/OtpLogin";
 import CartAddedFeedback from "../components/CartAddedFeedback";
+import CustomerAccessGate from "../components/CustomerAccessGate";
 
 const playfair = Playfair_Display({ 
   subsets: ["latin"],
@@ -81,10 +82,12 @@ export default function RootLayout({
         </noscript>
         <LocationProvider>
           <CartProvider>
-            {children}
-            <CartAddedFeedback />
-            <BottomNav />
-            <OtpLogin />
+            <CustomerAccessGate>
+              {children}
+              <CartAddedFeedback />
+              <BottomNav />
+            </CustomerAccessGate>
+            <OtpLogin showTrigger={false} />
           </CartProvider>
         </LocationProvider>
       </body>

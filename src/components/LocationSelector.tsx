@@ -22,6 +22,7 @@ export default function LocationSelector({ onClose, onAddAddress, pageMode = fal
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'loading' | 'complete'>('idle');
+  const [showLocationConsent, setShowLocationConsent] = useState(false);
   const { fetchCurrentLocation, locationStatus, locationAddress, locationName, setLocationManually, savedAddresses } = useLocation();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -140,7 +141,7 @@ export default function LocationSelector({ onClose, onAddAddress, pageMode = fal
                   type="button"
                   onClick={() => {
                     setLocationManually(suggestion.name, suggestion.displayName, suggestion.lat, suggestion.lng);
-                    onClose();
+                    if (!pageMode) onClose();
                   }}
                   className="location-suggestion-item"
                 >
@@ -162,8 +163,15 @@ export default function LocationSelector({ onClose, onAddAddress, pageMode = fal
             
             <div 
               onClick={() => {
-                fetchCurrentLocation();
-                onClose();
+                setShowLocationConsent(true);
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setShowLocationConsent(true);
+                }
               }}
               style={{ padding: '16px', display: 'flex', alignItems: 'flex-start', gap: '16px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}
             >
@@ -207,7 +215,7 @@ export default function LocationSelector({ onClose, onAddAddress, pageMode = fal
                 key={addr.id}
                 onClick={() => {
                   setLocationManually(addr.title, addr.address, addr.lat, addr.lng);
-                  onClose();
+                  if (!pageMode) onClose();
                 }}
                 style={{ background: '#fafafa', borderRadius: '16px', padding: '16px', border: '1px solid var(--border-subtle)', cursor: 'pointer', marginBottom: '12px' }}
               >
@@ -248,7 +256,7 @@ export default function LocationSelector({ onClose, onAddAddress, pageMode = fal
                 key={loc.name}
                 onClick={() => {
                   setLocationManually(loc.name, loc.addr, RESTAURANT_LAT, RESTAURANT_LNG); // Mock coords
-                  onClose();
+                  if (!pageMode) onClose();
                 }}
                 style={{ 
                   padding: '16px', 
@@ -274,6 +282,64 @@ export default function LocationSelector({ onClose, onAddAddress, pageMode = fal
         </div>
 
       </div>
+
+      {showLocationConsent && (
+        <div className="location-consent-backdrop" role="presentation">
+          <section
+            className="location-consent-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="location-consent-title"
+            aria-describedby="location-consent-description"
+          >
+            <button
+              type="button"
+              className="location-consent-close"
+              aria-label="Close location request"
+              onClick={() => setShowLocationConsent(false)}
+            >
+              <X size={18} />
+            </button>
+
+            <div className="location-consent-illustration" aria-hidden="true">
+              <span className="location-consent-pulse" />
+              <span className="location-consent-pin"><MapPin size={30} /></span>
+            </div>
+
+            <span className="location-consent-eyebrow">Delivery availability</span>
+            <h2 id="location-consent-title">Find food near you</h2>
+            <p id="location-consent-description">
+              Allow Azmar Mandi to use your location once so we can confirm delivery availability and show accurate service options.
+            </p>
+
+            <div className="location-consent-points">
+              <span><Crosshair size={16} /> Accurate delivery distance</span>
+              <span><Home size={16} /> Faster address selection</span>
+            </div>
+
+            <button
+              type="button"
+              className="location-consent-allow"
+              onClick={() => {
+                setShowLocationConsent(false);
+                fetchCurrentLocation();
+                if (!pageMode) onClose();
+              }}
+            >
+              <Crosshair size={18} /> Allow location
+            </button>
+            <button
+              type="button"
+              className="location-consent-later"
+              onClick={() => setShowLocationConsent(false)}
+            >
+              Not now — choose manually
+            </button>
+
+            <small>We only use your location to check delivery serviceability.</small>
+          </section>
+        </div>
+      )}
     </div>
   );
   return pageMode ? content : createPortal(content, document.body);

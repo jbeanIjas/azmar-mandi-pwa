@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState } from "react";
 
+export const LOCATION_STORAGE_KEY = 'azmar_selected_location';
+export const LOCATION_SELECTED_EVENT = 'azmar:location-selected';
+
 // Coordinates for the restaurant (Thiruvananthapuram)
 export const RESTAURANT_LAT = 8.475091650738907;
 export const RESTAURANT_LNG = 76.94724385255535;
@@ -27,6 +30,15 @@ export interface SavedAddress {
   phone: string;
   lat: number;
   lng: number;
+}
+
+function persistSelectedLocation(name: string, address: string, lat: number, lng: number) {
+  if (typeof window === 'undefined') return;
+
+  localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({ name, address, lat, lng }));
+  window.dispatchEvent(new CustomEvent(LOCATION_SELECTED_EVENT, {
+    detail: { name, address, lat, lng },
+  }));
 }
 
 interface LocationContextType {
@@ -66,6 +78,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     const distance = calculateDistance(lat, lng, RESTAURANT_LAT, RESTAURANT_LNG);
     setIsDeliveryAvailable(distance <= MAX_DISTANCE_KM);
     setLocationStatus('success');
+    persistSelectedLocation(name, address, lat, lng);
   };
 
   const fetchCurrentLocation = () => {
@@ -87,11 +100,17 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
           const res = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
           const data = await res.json();
           if (data?.result) {
-            setLocationName(data.result.name || 'Current Location');
-            setLocationAddress(data.result.displayName || 'Location found');
+            const resolvedName = data.result.name || 'Current Location';
+            const resolvedAddress = data.result.displayName || 'Location found';
+            setLocationName(resolvedName);
+            setLocationAddress(resolvedAddress);
+            persistSelectedLocation(resolvedName, resolvedAddress, latitude, longitude);
+          } else {
+            persistSelectedLocation('Current Location', 'Location found', latitude, longitude);
           }
         } catch (e) {
           console.error("Geocoding failed", e);
+          persistSelectedLocation('Current Location', 'Location found', latitude, longitude);
         }
 
         setLocationStatus('success');
