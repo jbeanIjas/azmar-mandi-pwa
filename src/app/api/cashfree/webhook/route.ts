@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     if (eventType === 'PAYMENT_SUCCESS_WEBHOOK') {
       const existing = await prisma.order.findUnique({ where: { orderNumber }, include: { items: true } });
       if (existing) {
+        const wasPaymentPending = existing.paymentStatus !== 'PAID';
         const updated = await prisma.order.update({
           where: { orderNumber },
           data: {
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
           include: { items: true },
         });
 
-        if (existing.status === 'PENDING') {
+        if (wasPaymentPending) {
           import('../../../../lib/orderNotifications').then(({ notifyNewOrder }) => {
             notifyNewOrder(updated).catch(console.error);
           });
