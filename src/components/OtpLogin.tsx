@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, LogOut, ShieldCheck, UserRound, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ClipboardPaste, LogOut, ShieldCheck, UserRound, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
@@ -88,9 +88,11 @@ export default function OtpLogin({
     }
   };
 
-  const verifyOtp = async (event: FormEvent) => {
-    event.preventDefault();
-    const cleanOtp = otp.replace(/\D/g, '');
+  const verifyOtp = async (event?: FormEvent, otpOverride?: string) => {
+    event?.preventDefault();
+    if (loading) return;
+
+    const cleanOtp = (otpOverride ?? otp).replace(/\D/g, '');
     const cleanMobile = mobile.replace(/\D/g, '').slice(-10);
 
     if (cleanOtp.length < 4) {
@@ -132,6 +134,25 @@ export default function OtpLogin({
       setError('Unable to verify OTP. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const pasteOtp = async () => {
+    setError('');
+
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      const pastedOtp = clipboardText.replace(/\D/g, '').slice(0, 6);
+
+      if (pastedOtp.length !== 6) {
+        setError('Copy the 6-digit WhatsApp code, then tap Paste OTP again.');
+        return;
+      }
+
+      setOtp(pastedOtp);
+      await verifyOtp(undefined, pastedOtp);
+    } catch {
+      setError('Clipboard access was unavailable. Press and hold the field to paste your code.');
     }
   };
 
@@ -262,11 +283,22 @@ export default function OtpLogin({
             placeholder="••••••"
             value={otp}
             onChange={(e) => {
-              setOtp(e.target.value.replace(/\D/g, '').slice(0, 6));
+              const nextOtp = e.target.value.replace(/\D/g, '').slice(0, 6);
+              setOtp(nextOtp);
               setError('');
+              if (nextOtp.length === 6) void verifyOtp(undefined, nextOtp);
             }}
             autoFocus
           />
+
+          <button
+            type="button"
+            className="otp-paste"
+            disabled={loading}
+            onClick={pasteOtp}
+          >
+            <ClipboardPaste size={16} /> Paste OTP from WhatsApp
+          </button>
 
           {error && <p className="otp-error" role="alert">{error}</p>}
 

@@ -49,7 +49,7 @@ interface LocationContextType {
   locationLat: number | null;
   locationLng: number | null;
   savedAddresses: SavedAddress[];
-  fetchCurrentLocation: () => void;
+  fetchCurrentLocation: () => Promise<boolean>;
   setLocationManually: (name: string, address: string, lat: number, lng: number) => void;
   addSavedAddress: (address: Omit<SavedAddress, 'id'>) => void;
 }
@@ -81,45 +81,49 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     persistSelectedLocation(name, address, lat, lng);
   };
 
-  const fetchCurrentLocation = () => {
+  const fetchCurrentLocation = (): Promise<boolean> => {
     setLocationStatus('loading');
     if (!navigator.geolocation) {
       setLocationStatus('error');
-      return;
+      return Promise.resolve(false);
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setLocationLat(latitude);
-        setLocationLng(longitude);
-        const distance = calculateDistance(latitude, longitude, RESTAURANT_LAT, RESTAURANT_LNG);
-        setIsDeliveryAvailable(distance <= MAX_DISTANCE_KM);
-        
-        try {
-          const res = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
-          const data = await res.json();
-          if (data?.result) {
-            const resolvedName = data.result.name || 'Current Location';
-            const resolvedAddress = data.result.displayName || 'Location found';
-            setLocationName(resolvedName);
-            setLocationAddress(resolvedAddress);
-            persistSelectedLocation(resolvedName, resolvedAddress, latitude, longitude);
-          } else {
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocationLat(latitude);
+          setLocationLng(longitude);
+          const distance = calculateDistance(latitude, longitude, RESTAURANT_LAT, RESTAURANT_LNG);
+          setIsDeliveryAvailable(distance <= MAX_DISTANCE_KM);
+
+          try {
+            const res = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
+            const data = await res.json();
+            if (data?.result) {
+              const resolvedName = data.result.name || 'Current Location';
+              const resolvedAddress = data.result.displayName || 'Location found';
+              setLocationName(resolvedName);
+              setLocationAddress(resolvedAddress);
+              persistSelectedLocation(resolvedName, resolvedAddress, latitude, longitude);
+            } else {
+              persistSelectedLocation('Current Location', 'Location found', latitude, longitude);
+            }
+          } catch (e) {
+            console.error("Geocoding failed", e);
             persistSelectedLocation('Current Location', 'Location found', latitude, longitude);
           }
-        } catch (e) {
-          console.error("Geocoding failed", e);
-          persistSelectedLocation('Current Location', 'Location found', latitude, longitude);
-        }
 
-        setLocationStatus('success');
-      },
-      (error) => {
-        console.error("Location error", error);
-        setLocationStatus('error');
-      }
-    );
+          setLocationStatus('success');
+          resolve(true);
+        },
+        (error) => {
+          console.error("Location error", error);
+          setLocationStatus('error');
+          resolve(false);
+        }
+      );
+    });
   };
 
   // Initially don't auto-fetch to avoid aggressive permission popups, wait for user action

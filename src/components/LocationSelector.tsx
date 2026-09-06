@@ -320,10 +320,10 @@ export default function LocationSelector({ onClose, onAddAddress, pageMode = fal
             <button
               type="button"
               className="location-consent-allow"
-              onClick={() => {
+              onClick={async () => {
                 setShowLocationConsent(false);
-                fetchCurrentLocation();
-                if (!pageMode) onClose();
+                const selected = await fetchCurrentLocation();
+                if (selected) onClose();
               }}
             >
               <Crosshair size={18} /> Allow location
