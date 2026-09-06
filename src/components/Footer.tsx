@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-intro">
           <div className="footer-brand">
-            <span><Image src="/brand/azmar-mark.png" alt="Azmar Mandi" width={54} height={54} /></span>
+            <span><Image src="/brand/azmar-mark-v2.jpeg" alt="Azmar Mandi" width={54} height={54} /></span>
             <div><strong>AZMAR MANDI</strong><small>Crafted the Arabian way</small></div>
           </div>
           <p>Slow-cooked Arabian flavours, prepared fresh for every order.</p>

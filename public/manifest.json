@@ -4,8 +4,8 @@
   "description": "Azmar Mandi Mobile App",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fffaf4",
-  "theme_color": "#6b0503",
+  "background_color": "#faf9f4",
+  "theme_color": "#174c43",
   "orientation": "portrait",
   "icons": [
     {

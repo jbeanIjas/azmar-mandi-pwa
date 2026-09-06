@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
       lineHeight: '1.7',
     }}>
       <header style={{ marginBottom: '32px', borderBottom: '1px solid #eadfd5', paddingBottom: '24px' }}>
-        <h1 style={{ fontSize: '32px', color: '#6b0503', marginBottom: '8px' }}>Privacy Policy</h1>
+        <h1 style={{ fontSize: '32px', color: '#174c43', marginBottom: '8px' }}>Privacy Policy</h1>
         <p style={{ color: '#786965', fontSize: '14px' }}>Last updated: August 14, 2026</p>
       </header>
 
@@ -81,7 +81,7 @@ export default function PrivacyPolicyPage() {
           You have the right to request access to or permanent deletion of your personal data at any time.
         </p>
         <p style={{ color: '#4a3f3d', fontSize: '14px' }}>
-          To request account or data deletion, please contact us at <a href="mailto:azmarmandi@gmail.com" style={{ color: '#6b0503', fontWeight: 'bold' }}>azmarmandi@gmail.com</a>. Upon verification, your profile and associated data will be permanently removed from our active databases within 30 days.
+          To request account or data deletion, please contact us at <a href="mailto:azmarmandi@gmail.com" style={{ color: '#174c43', fontWeight: 'bold' }}>azmarmandi@gmail.com</a>. Upon verification, your profile and associated data will be permanently removed from our active databases within 30 days.
         </p>
       </section>
 
@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
         </p>
         <p style={{ color: '#4a3f3d', fontSize: '14px', marginTop: '8px' }}>
           <strong>Azmar Mandi Support</strong><br />
-          Email: <a href="mailto:azmarmandi@gmail.com" style={{ color: '#6b0503', fontWeight: 'bold' }}>azmarmandi@gmail.com</a>
+          Email: <a href="mailto:azmarmandi@gmail.com" style={{ color: '#174c43', fontWeight: 'bold' }}>azmarmandi@gmail.com</a>
         </p>
       </section>
     </main>

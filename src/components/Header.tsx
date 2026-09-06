@@ -16,7 +16,7 @@ export default function Header({ phone }: { phone?: string }) {
     <>
       <header className="app-header">
         <Link className="header-brand" href="/" aria-label="Azmar Mandi home">
-          <Image src="/brand/azmar-mark.png" alt="" width={44} height={44} priority />
+          <Image src="/brand/azmar-mark-v2.jpeg" alt="" width={44} height={44} priority />
           <span><strong>AZMAR</strong><small>MANDI</small></span>
         </Link>
         <Link className="location-trigger" href="/location">

@@ -15,7 +15,7 @@ export default function BottomNav() {
   const { items } = useCart();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  if (pathname.startsWith('/admin')) return null;
+  if (pathname.startsWith('/admin') || pathname === '/cart' || pathname.startsWith('/product/')) return null;
 
   const navItems = [
     { name: "Home", href: "/", icon: Home, active: true },

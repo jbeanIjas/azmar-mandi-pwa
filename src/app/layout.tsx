@@ -7,6 +7,7 @@ import { CartProvider } from "../context/CartContext";
 import { LocationProvider } from "../context/LocationContext";
 import BottomNav from "../components/BottomNav";
 import OtpLogin from "../components/OtpLogin";
+import CartAddedFeedback from "../components/CartAddedFeedback";
 
 const playfair = Playfair_Display({ 
   subsets: ["latin"],
@@ -20,7 +21,7 @@ const poppins = Poppins({
 });
 
 export const viewport: Viewport = {
-  themeColor: '#6b0503',
+  themeColor: '#174c43',
   colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
@@ -81,6 +82,7 @@ export default function RootLayout({
         <LocationProvider>
           <CartProvider>
             {children}
+            <CartAddedFeedback />
             <BottomNav />
             <OtpLogin />
           </CartProvider>

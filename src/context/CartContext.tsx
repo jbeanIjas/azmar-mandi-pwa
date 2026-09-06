@@ -11,12 +11,14 @@ interface CartContextType {
   items: CartItem[];
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
-  addToCart: (item: MenuItem) => void;
+  addToCart: (item: MenuItem, showFeedback?: boolean) => void;
   addItemsToCart: (items: CartItem[]) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   cartTotal: number;
+  addedFeedback: { item: MenuItem; quantity: number } | null;
+  dismissAddedFeedback: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -24,6 +26,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [addedFeedback, setAddedFeedback] = useState<{ item: MenuItem; quantity: number } | null>(null);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -42,7 +45,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("azmar_cart", JSON.stringify(items));
   }, [items]);
 
-  const addToCart = (item: MenuItem) => {
+  const addToCart = (item: MenuItem, showFeedback = true) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
@@ -53,6 +56,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return [...prev, { ...item, quantity: 1 }];
     });
     setIsCartOpen(true);
+    if (showFeedback) setAddedFeedback({ item, quantity: 1 });
   };
 
   const addItemsToCart = (newItems: CartItem[]) => {
@@ -65,6 +69,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return [...merged.values()];
     });
     setIsCartOpen(true);
+    if (newItems[0]) setAddedFeedback({ item: newItems[0], quantity: newItems.reduce((sum, item) => sum + item.quantity, 0) });
   };
 
   const removeFromCart = (id: string) => {
@@ -103,6 +108,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         clearCart,
         cartTotal,
+        addedFeedback,
+        dismissAddedFeedback: () => setAddedFeedback(null),
       }}
     >
       {children}

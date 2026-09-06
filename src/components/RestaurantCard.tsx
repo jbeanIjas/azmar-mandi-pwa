@@ -1,8 +1,9 @@
 "use client";
 
 import Image from 'next/image';
-import { Plus, Star } from 'lucide-react';
+import { Check, Plus, Star, X } from 'lucide-react';
 import React, { TouchEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MenuItem } from '@prisma/client';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../context/CartContext';
@@ -49,6 +50,8 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
   const router = useRouter();
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideCycle, setSlideCycle] = useState(0);
+  const [showVariantSelector, setShowVariantSelector] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState('full');
   const touchStartX = useRef<number | null>(null);
   const featured = item.tags?.includes('Best Seller') || item.tags?.includes('Signature');
   const slides = useMemo(() => Array.from(new Set([
@@ -56,6 +59,12 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
     ...readGalleryImages(item.specs),
     ...(categoryGallery[item.categoryId] ?? []),
   ])).slice(0, 3), [item.categoryId, item.image, item.specs]);
+  const basePrice = parseFloat(item.price.replace(/[^0-9.-]+/g, '')) || 0;
+  const variants = [
+    { id: 'quarter', label: 'Quarter', price: Math.round(basePrice * 0.4), available: false },
+    { id: 'half', label: 'Half', price: Math.round(basePrice * 0.6), available: true },
+    { id: 'full', label: 'Full', price: basePrice, available: true },
+  ];
 
   useEffect(() => {
     if (slides.length < 2) return;
@@ -131,7 +140,7 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
             <button
               onClick={(event) => {
                 event.stopPropagation();
-                addToCart(item);
+                setShowVariantSelector(true);
               }}
               aria-label={`Add ${item.name} to cart`}
             >
@@ -139,6 +148,48 @@ export default function RestaurantCard({ item }: { item: MenuItem }) {
             </button>
           </div>
         </div>
+        {showVariantSelector && createPortal(
+          <div
+            className="variant-selector-overlay"
+            onClick={(event) => { event.stopPropagation(); setShowVariantSelector(false); }}
+            style={{ position: 'fixed', inset: 0, zIndex: 4500, display: 'grid', padding: '16px', placeItems: 'center', background: 'rgba(15,44,39,.72)', backdropFilter: 'blur(10px)' }}
+          >
+            <div
+              className="variant-selector-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={`variant-title-${item.id}`}
+              onClick={(event) => event.stopPropagation()}
+              style={{ width: 'min(100%, 410px)', padding: '20px', border: '1px solid rgba(255,255,255,.55)', borderRadius: '24px', background: '#fff', boxShadow: '0 28px 80px rgba(10,42,36,.34)', animation: 'cart-added-pop .4s cubic-bezier(.2,.9,.3,1.2)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ position: 'relative', width: '64px', height: '64px', flex: '0 0 64px', overflow: 'hidden', borderRadius: '13px', background: '#eef3f0' }}><Image src={item.image} alt="" fill sizes="64px" style={{ objectFit: 'cover' }} /></div>
+                <div style={{ minWidth: 0, flex: 1 }}><small style={{ color: 'var(--accent-red)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Choose your portion</small><h2 id={`variant-title-${item.id}`} style={{ margin: '3px 0 0', overflow: 'hidden', color: '#17342f', fontSize: '18px', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</h2></div>
+                <button type="button" aria-label="Close variant selector" onClick={() => setShowVariantSelector(false)} style={{ display: 'grid', width: '36px', height: '36px', padding: 0, placeItems: 'center', border: 0, borderRadius: '50%', background: '#f0f3f1', color: '#38534e', cursor: 'pointer' }}><X size={18} /></button>
+              </div>
+
+              <div style={{ display: 'grid', marginTop: '18px', gap: '9px' }}>
+                {variants.map((variant) => {
+                  const selected = selectedVariant === variant.id;
+                  return <button key={variant.id} type="button" disabled={!variant.available} onClick={() => setSelectedVariant(variant.id)} style={{ display: 'flex', minHeight: '58px', padding: '0 14px', alignItems: 'center', justifyContent: 'space-between', border: selected ? '1.5px solid var(--accent-red)' : '1px solid var(--border-subtle)', borderRadius: '14px', background: selected ? 'rgba(var(--accent-red-rgb),.07)' : '#fff', color: variant.available ? '#17342f' : '#a8b0ad', cursor: variant.available ? 'pointer' : 'not-allowed', opacity: variant.available ? 1 : .58 }}><span style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700 }}><span style={{ display: 'grid', width: '22px', height: '22px', placeItems: 'center', border: selected ? '6px solid var(--accent-red)' : '2px solid #cbd5d1', borderRadius: '50%' }} />{variant.label}{!variant.available && <small>Out of stock</small>}</span><strong>₹{variant.price}</strong></button>;
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const variant = variants.find((option) => option.id === selectedVariant) ?? variants[2];
+                  addToCart({ ...item, price: `₹${variant.price}`, specs: { ...(item.specs && typeof item.specs === 'object' && !Array.isArray(item.specs) ? item.specs : {}), selectedVariant: variant.label } });
+                  setShowVariantSelector(false);
+                }}
+                style={{ display: 'flex', width: '100%', minHeight: '52px', marginTop: '16px', alignItems: 'center', justifyContent: 'center', gap: '8px', border: 0, borderRadius: '14px', background: 'var(--accent-red)', color: '#fff', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 10px 22px rgba(var(--accent-red-rgb),.22)' }}
+              >
+                <Check size={17} /> Add {variants.find((variant) => variant.id === selectedVariant)?.label} · ₹{variants.find((variant) => variant.id === selectedVariant)?.price}
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
       </article>
   );
 }

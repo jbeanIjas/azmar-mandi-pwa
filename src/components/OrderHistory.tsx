@@ -63,7 +63,7 @@ export default function OrderHistory({ orders, signedIn }: { orders: Order[]; si
                     {order.paymentStatus}
                   </span>
                 )}
-                <span style={{ height: 'fit-content', padding: '6px 9px', borderRadius: '999px', background: 'rgba(189,29,75,.09)', color: 'var(--accent-red)', fontSize: '9px', fontWeight: 900 }}>{statusLabels[order.status] || order.status}</span>
+                <span style={{ height: 'fit-content', padding: '6px 9px', borderRadius: '999px', background: 'rgba(var(--accent-red-rgb),.09)', color: 'var(--accent-red)', fontSize: '9px', fontWeight: 900 }}>{statusLabels[order.status] || order.status}</span>
               </div>
             </div>
             <div style={{ margin: '16px 0', padding: '12px 0', borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>{order.items.map((item) => <div key={item.productId} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#555', fontSize: '12px' }}><span>{item.quantity} × {item.name}</span><strong>₹{item.price * item.quantity}</strong></div>)}</div>

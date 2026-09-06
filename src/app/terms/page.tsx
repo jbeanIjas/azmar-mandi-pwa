@@ -16,7 +16,7 @@ export default function TermsOfServicePage() {
       lineHeight: '1.7',
     }}>
       <header style={{ marginBottom: '32px', borderBottom: '1px solid #eadfd5', paddingBottom: '24px' }}>
-        <h1 style={{ fontSize: '32px', color: '#6b0503', marginBottom: '8px' }}>Terms of Service</h1>
+        <h1 style={{ fontSize: '32px', color: '#174c43', marginBottom: '8px' }}>Terms of Service</h1>
         <p style={{ color: '#786965', fontSize: '14px' }}>Last updated: August 14, 2026</p>
       </header>
 
@@ -78,7 +78,7 @@ export default function TermsOfServicePage() {
         </p>
         <p style={{ color: '#4a3f3d', fontSize: '14px', marginTop: '8px' }}>
           <strong>Azmar Mandi Support</strong><br />
-          Email: <a href="mailto:azmarmandi@gmail.com" style={{ color: '#6b0503', fontWeight: 'bold' }}>azmarmandi@gmail.com</a>
+          Email: <a href="mailto:azmarmandi@gmail.com" style={{ color: '#174c43', fontWeight: 'bold' }}>azmarmandi@gmail.com</a>
         </p>
       </section>
     </main>
