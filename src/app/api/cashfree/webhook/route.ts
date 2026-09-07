@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import { verifyWebhookSignature } from '../../../../lib/cashfree';
+import { notifyNewOrder } from '../../../../lib/orderNotifications';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,9 +41,11 @@ export async function POST(request: NextRequest) {
         });
 
         if (wasPaymentPending) {
-          import('../../../../lib/orderNotifications').then(({ notifyNewOrder }) => {
-            notifyNewOrder(updated).catch(console.error);
-          });
+          try {
+            await notifyNewOrder(updated);
+          } catch (notifyErr) {
+            console.error('[Cashfree Webhook] Failed to send order notification:', notifyErr);
+          }
         }
       }
     } else if (eventType === 'PAYMENT_FAILED_WEBHOOK') {

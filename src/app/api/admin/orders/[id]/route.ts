@@ -59,9 +59,11 @@ export async function PATCH(request: NextRequest, context: RouteContext<'/api/ad
     });
 
     // Notify customer on WhatsApp for the new stage
-    sendWhatsAppOrderStatusNotification(order, newStatus).catch((err) => {
+    try {
+      await sendWhatsAppOrderStatusNotification(order, newStatus);
+    } catch (err) {
       console.error(`[MSG91 WhatsApp] Failed to send stage notification for order ${order.orderNumber}:`, err);
-    });
+    }
 
     return Response.json(order);
   } catch {

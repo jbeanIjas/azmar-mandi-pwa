@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { notifyNewOrder } from '../../../../lib/orderNotifications';
 import prisma from '../../../../lib/prisma';
 import { getCashfreeOrderDetails, getCashfreePayments } from '../../../../lib/cashfree';
 
@@ -47,9 +48,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (isPaid && wasPaymentPending) {
-      import('../../../../lib/orderNotifications').then(({ notifyNewOrder }) => {
-        notifyNewOrder(updatedOrder).catch(console.error);
-      });
+      try {
+        await notifyNewOrder(updatedOrder);
+      } catch (notifyErr) {
+        console.error('[Cashfree Verify] Failed to send order notification:', notifyErr);
+      }
     }
 
     return NextResponse.json({

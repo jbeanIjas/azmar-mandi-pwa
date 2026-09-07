@@ -91,9 +91,10 @@ export async function sendWhatsAppOrderStatusNotification(
   const isCancelled = stageKey === 'CANCELLED';
   const templateName = isDelivered ? deliveredTemplate : (isCancelled ? cancelledTemplate : defaultStatusTemplate);
 
-  const itemsSummary = order.items && order.items.length > 0
+  const rawSummary = order.items && order.items.length > 0
     ? order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')
     : `${order.orderType === 'delivery' ? 'Delivery' : 'Pickup'} Order`;
+  const itemsSummary = rawSummary.length > 60 ? `${rawSummary.slice(0, 57)}...` : rawSummary;
 
   // Dynamic components payload based on template type
   let components: Record<string, { type: string; value: string }>;
@@ -123,9 +124,9 @@ export async function sendWhatsAppOrderStatusNotification(
     let contextNote = stageInfo.defaultNote;
     if (!contextNote) {
       if (stageKey === 'PLACED' || stageKey === 'CONFIRMED') {
-        contextNote = `🧾 Total: ₹${order.total} • Items: ${itemsSummary}`;
+        contextNote = `Total: ₹${order.total} • Items: ${itemsSummary}`;
       } else if (stageKey === 'COMPLETED') {
-        contextNote = `✨ Total: ₹${order.total} • Hope you enjoy your meal!`;
+        contextNote = `Total: ₹${order.total} • Enjoy your meal!`;
       } else {
         contextNote = `Total: ₹${order.total}`;
       }
